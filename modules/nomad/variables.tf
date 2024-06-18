@@ -69,31 +69,46 @@ variable "tls" {
     ca_cert = optional(object({
       path    = string
       content = string
+      tags    = string
     }))
     cert_file = optional(object({
       path    = string
       content = string
+      tags    = string
     }))
     key_file = optional(object({
       path    = string
       content = string
+      tags    = string
     }))
   })
   default = {
     ca_cert = {
       path    = "/opt/nomad/tls/ca.pem"
       content = ""
+      tags    = "cloud-init,ignition"
     }
     cert_file = {
       path    = "/opt/nomad/tls/agent.pem"
       content = ""
+      tags    = "cloud-init,ignition"
     }
     key_file = {
       path    = "/opt/nomad/tls/agent.key"
       content = ""
+      tags    = "cloud-init,ignition"
     }
   }
   description = "TLS configuration for Nomad"
+}
+
+variable "host_volume" {
+  type = map(object({
+    path      = string
+    read_only = bool
+  }))
+  default     = {}
+  description = "Host volume configuration for Nomad"
 }
 
 resource "random_id" "gossip_key" {

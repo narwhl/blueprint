@@ -1,0 +1,62 @@
+job "${job_name}" {
+  datacenters = ["${datacenter_name}"]
+  type        = "service"
+
+  group "${job_name}" {
+    volume "postgres-socket" {
+      type = "host"
+      source = "postgres-socket"
+    }
+    volume "postgres-data" {
+      type = "host"
+      source = "postgres-data"
+    }
+    volume "postgres-log" {
+      type = "host"
+      source = "postgres-log"
+    }
+    task "${job_name}" {
+      driver = "exec"
+
+      volume_mount {
+        volume      = "postgres-socket"
+        destination = "/var/run/postgresql"
+      }
+
+      volume_mount {
+        volume      = "postgres-data"
+        destination = "/var/lib/postgresql"
+      }
+
+      volume_mount {
+        volume      = "postgres-log"
+        destination = "/var/log/postgresql"
+      }
+
+      config {
+        command = "/usr/bin/pg_ctlcluster"
+        args    = [
+          "15", "main", "start", "--foreground"
+        ]
+      }
+
+      user = "postgres"
+
+      template {
+        data        = <<EOH
+${pgbackrest_conf}
+EOH
+        destination = "$${NOMAD_TASK_DIR}/pgbackrest.conf"
+      }
+
+      template {
+        data        = <<EOH
+archive_mode = on
+archive_command = 'pgbackrest --stanza=${pgbackrest_stanza} --config /local/pgbackrest.conf archive-push %p'
+EOH
+        # exec driver can render templates outside of the NOMAD_TASK_DIR
+        destination = "/etc/postgresql/15/main/conf.d/50-pgbackrest.conf"
+      }
+    }
+  }
+}
