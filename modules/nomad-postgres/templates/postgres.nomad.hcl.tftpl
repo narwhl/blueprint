@@ -1,0 +1,92 @@
+job "${job_name}" {
+  datacenters = ["${datacenter_name}"]
+  type        = "service"
+
+  group "${job_name}" {
+    network {
+      mode = "bridge"
+      port "postgres" {
+        static = 5432
+      }
+    }
+    volume "postgres-socket" {
+      type   = "host"
+      source = "${postgres_socket_host_volume_name}"
+    }
+    volume "postgres-data" {
+      type   = "host"
+      source = "${postgres_data_host_volume_name}"
+    }
+    volume "postgres-log" {
+      type   = "host"
+      source = "${postgres_log_host_volume_name}"
+    }
+    task "${job_name}" {
+      driver = "exec"
+
+      volume_mount {
+        volume      = "postgres-socket"
+        destination = "/var/run/postgresql"
+      }
+
+      volume_mount {
+        volume      = "postgres-data"
+        destination = "/var/lib/postgresql"
+      }
+
+      volume_mount {
+        volume      = "postgres-log"
+        destination = "/var/log/postgresql"
+      }
+
+      config {
+        command = "/usr/bin/pg_ctlcluster"
+        args    = [
+          "15", "main", "start", "--foreground"
+        ]
+      }
+
+      user = "postgres"
+
+      template {
+        data        = <<EOH
+${pgbackrest_conf}
+EOH
+        destination = "$${NOMAD_TASK_DIR}/pgbackrest.conf"
+      }
+
+      template {
+        data        = <<EOH
+archive_mode = on
+archive_command = 'pgbackrest --stanza=${pgbackrest_stanza} --config /local/pgbackrest.conf archive-push %p'
+EOH
+        # exec driver can render templates outside of the NOMAD_TASK_DIR
+        destination = "/etc/postgresql/15/main/conf.d/50-pgbackrest.conf"
+      }
+      template {
+        data        = "listen_addresses = '*'"
+        destination = "/etc/postgresql/15/main/conf.d/50-listen-addresses.conf"
+      }
+      template {
+        data        = <<EOH
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+
+# "local" is for Unix domain socket connections only
+local   all             all                                     trust
+# IPv4 local connections:
+host    all             all             127.0.0.1/32            trust
+# IPv6 local connections:
+host    all             all             ::1/128                 trust
+# Allow replication connections from localhost, by a user with the
+# replication privilege.
+local   replication     all                                     trust
+host    replication     all             127.0.0.1/32            trust
+host    replication     all             ::1/128                 trust
+# Allow connections outside container
+host    all             all             all                     scram-sha-256
+EOH
+        destination = "/etc/postgresql/15/main/pg_hba.conf"
+      }
+    }
+  }
+}

@@ -10,4 +10,10 @@ advertise = {
 client = {
   enabled  = true
   cni_path = "/usr/lib/cni"
+%{ for host_volume_name, host_volume in host_volumes ~}
+  host_volume "${host_volume_name}" {
+    path = "${host_volume.path}"
+    read_only = ${host_volume.read_only}
+  }
+%{ endfor ~}
 }

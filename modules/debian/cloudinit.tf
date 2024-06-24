@@ -50,7 +50,8 @@ data "cloudinit_config" "user_data" {
             cloud_final_modules = [
               "package_update_upgrade_install",
               "scripts_user", # required for runcmd
-              "power_state_change"
+              "power_state_change",
+              "write-files-deferred",
             ]
             hostname         = var.name
             manage_etc_hosts = true

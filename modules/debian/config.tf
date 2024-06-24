@@ -128,6 +128,7 @@ locals {
       path        = file.path
       owner       = format("%s:%s", file.owner, file.group)
       permissions = length(file.mode) < 4 ? "0${file.mode}" : file.mode
+      defer       = true # ensure users, packages are created before writing extra files 
     } if file.enabled == true && !startswith(file.content, "https://") && strcontains(file.tags, lookup(file, "tags", "cloud-init"))
   ]
   repositories = merge(

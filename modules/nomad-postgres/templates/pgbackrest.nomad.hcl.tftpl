@@ -1,0 +1,62 @@
+job "${job_name}" {
+  datacenters = ["*"]
+  type        = "batch"
+
+  periodic {
+    cron             = "${backup_schedule}"
+    prohibit_overlap = true
+  }
+
+  group "${job_name}" {
+    volume "postgres-socket" {
+      type   = "host"
+      source = "${postgres_socket_host_volume_name}"
+    }
+    volume "postgres-data" {
+      type   = "host"
+      source = "${postgres_data_host_volume_name}"
+    }
+    volume "postgres-log" {
+      type   = "host"
+      source = "${postgres_log_host_volume_name}"
+    }
+    task "${job_name}" {
+      driver = "exec"
+
+      volume_mount {
+        volume      = "postgres-socket"
+        destination = "/var/run/postgresql"
+      }
+
+      volume_mount {
+        volume      = "postgres-data"
+        destination = "/var/lib/postgresql"
+      }
+
+      volume_mount {
+        volume      = "postgres-log"
+        destination = "/var/log/postgresql"
+      }
+
+      config {
+        command = "/usr/bin/pgbackrest"
+        args    = [
+          "--config", "$${NOMAD_TASK_DIR}/pgbackrest.conf",
+          "--stanza=${pgbackrest_stanza}",
+          "--type=full",
+          "backup"
+        ]
+      }
+
+      user = "postgres"
+
+      template {
+        data        = <<EOH
+${pgbackrest_conf}
+EOH
+        destination = "$${NOMAD_TASK_DIR}/pgbackrest.conf"
+      }
+    }
+  }
+}
+

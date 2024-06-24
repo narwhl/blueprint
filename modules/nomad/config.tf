@@ -33,6 +33,14 @@ locals {
       content = ""
     },
     {
+      # override the default nomad.hcl config from package
+      path    = "/etc/nomad.d/nomad.hcl"
+      tags    = "cloud-init"
+      owner   = "nomad"
+      group   = "nomad"
+      content = ""
+    },
+    {
       path    = "/etc/nomad.d/plugins.hcl"
       tags    = "cloud-init,ignition"
       owner   = "nomad"
@@ -64,6 +72,7 @@ locals {
           datacenter_name = var.datacenter_name
           data_dir        = var.data_dir
           log_level       = var.log_level
+          host_volumes    = var.host_volume
         }
       )
     },
