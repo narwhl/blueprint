@@ -19,6 +19,11 @@ variable "pgbackrest_init_job_name" {
   default = "pgbackrest-init"
 }
 
+variable "pgbackrest_restore_job_name" {
+  type    = string
+  default = "pgbackrest-restore"
+}
+
 variable "datacenter_name" {
   type        = string
   description = "Name of the datacenter"
@@ -46,5 +51,10 @@ variable "pgbackrest_stanza" {
   description = "The pgBackRest stanza to use"
 }
 
+variable "restore_backup" {
+  type        = bool
+  default     = false
+  description = "Whether to restore backup from specified S3 bucket"
+}
 
 

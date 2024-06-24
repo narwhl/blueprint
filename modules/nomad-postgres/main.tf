@@ -38,10 +38,24 @@ resource "nomad_job" "pgbackrest" {
 }
 
 resource "nomad_job" "pgbackrest_init" {
+  count = var.restore_backup ? 0 : 1
   jobspec = templatefile(
     "${path.module}/templates/pgbackrest-init.nomad.hcl.tftpl",
     {
       job_name          = var.pgbackrest_init_job_name
+      datacenter_name   = var.datacenter_name
+      pgbackrest_conf   = local.pgbackrest_conf
+      pgbackrest_stanza = var.pgbackrest_stanza
+    }
+  )
+}
+
+resource "nomad_job" "pgbackrest_restore" {
+  count = var.restore_backup ? 1 : 0
+  jobspec = templatefile(
+    "${path.module}/templates/pgbackrest-restore.nomad.hcl.tftpl",
+    {
+      job_name          = var.pgbackrest_restore_job_name
       datacenter_name   = var.datacenter_name
       pgbackrest_conf   = local.pgbackrest_conf
       pgbackrest_stanza = var.pgbackrest_stanza
