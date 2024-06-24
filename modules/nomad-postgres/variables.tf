@@ -51,6 +51,20 @@ variable "pgbackrest_stanza" {
   description = "The pgBackRest stanza to use"
 }
 
+variable "postgres_host_volumes_name" {
+  type = object({
+    data   = string
+    socket = string
+    log    = string
+  })
+  default = {
+    data   = "postgres-data"
+    socket = "postgres-socket"
+    log    = "postgres-log"
+  }
+  description = "The name of the PostgreSQL host volumes"
+}
+
 variable "restore_backup" {
   type        = bool
   default     = false

@@ -16,10 +16,13 @@ resource "nomad_job" "postgres" {
   jobspec = templatefile(
     "${path.module}/templates/postgres.nomad.hcl.tftpl",
     {
-      job_name          = var.postgres_job_name
-      datacenter_name   = var.datacenter_name
-      pgbackrest_conf   = local.pgbackrest_conf
-      pgbackrest_stanza = var.pgbackrest_stanza
+      job_name                         = var.postgres_job_name
+      datacenter_name                  = var.datacenter_name
+      pgbackrest_conf                  = local.pgbackrest_conf
+      pgbackrest_stanza                = var.pgbackrest_stanza
+      postgres_socket_host_volume_name = var.postgres_host_volumes_name.socket
+      postgres_data_host_volume_name   = var.postgres_host_volumes_name.data
+      postgres_log_host_volume_name    = var.postgres_host_volumes_name.log
     }
   )
 }
@@ -28,11 +31,14 @@ resource "nomad_job" "pgbackrest" {
   jobspec = templatefile(
     "${path.module}/templates/pgbackrest.nomad.hcl.tftpl",
     {
-      job_name          = var.pgbackrest_job_name
-      datacenter_name   = var.datacenter_name
-      pgbackrest_conf   = local.pgbackrest_conf
-      pgbackrest_stanza = var.pgbackrest_stanza
-      backup_schedule   = var.backup_schedule
+      job_name                         = var.pgbackrest_job_name
+      datacenter_name                  = var.datacenter_name
+      pgbackrest_conf                  = local.pgbackrest_conf
+      pgbackrest_stanza                = var.pgbackrest_stanza
+      backup_schedule                  = var.backup_schedule
+      postgres_socket_host_volume_name = var.postgres_host_volumes_name.socket
+      postgres_data_host_volume_name   = var.postgres_host_volumes_name.data
+      postgres_log_host_volume_name    = var.postgres_host_volumes_name.log
     }
   )
 }
@@ -42,10 +48,13 @@ resource "nomad_job" "pgbackrest_init" {
   jobspec = templatefile(
     "${path.module}/templates/pgbackrest-init.nomad.hcl.tftpl",
     {
-      job_name          = var.pgbackrest_init_job_name
-      datacenter_name   = var.datacenter_name
-      pgbackrest_conf   = local.pgbackrest_conf
-      pgbackrest_stanza = var.pgbackrest_stanza
+      job_name                         = var.pgbackrest_init_job_name
+      datacenter_name                  = var.datacenter_name
+      pgbackrest_conf                  = local.pgbackrest_conf
+      pgbackrest_stanza                = var.pgbackrest_stanza
+      postgres_socket_host_volume_name = var.postgres_host_volumes_name.socket
+      postgres_data_host_volume_name   = var.postgres_host_volumes_name.data
+      postgres_log_host_volume_name    = var.postgres_host_volumes_name.log
     }
   )
 }
@@ -55,10 +64,13 @@ resource "nomad_job" "pgbackrest_restore" {
   jobspec = templatefile(
     "${path.module}/templates/pgbackrest-restore.nomad.hcl.tftpl",
     {
-      job_name          = var.pgbackrest_restore_job_name
-      datacenter_name   = var.datacenter_name
-      pgbackrest_conf   = local.pgbackrest_conf
-      pgbackrest_stanza = var.pgbackrest_stanza
+      job_name                         = var.pgbackrest_restore_job_name
+      datacenter_name                  = var.datacenter_name
+      pgbackrest_conf                  = local.pgbackrest_conf
+      pgbackrest_stanza                = var.pgbackrest_stanza
+      postgres_socket_host_volume_name = var.postgres_host_volumes_name.socket
+      postgres_data_host_volume_name   = var.postgres_host_volumes_name.data
+      postgres_log_host_volume_name    = var.postgres_host_volumes_name.log
     }
   )
 }

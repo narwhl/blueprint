@@ -10,16 +10,16 @@ job "${job_name}" {
       }
     }
     volume "postgres-socket" {
-      type = "host"
-      source = "postgres-socket"
+      type   = "host"
+      source = "${postgres_socket_host_volume_name}"
     }
     volume "postgres-data" {
-      type = "host"
-      source = "postgres-data"
+      type   = "host"
+      source = "${postgres_data_host_volume_name}"
     }
     volume "postgres-log" {
-      type = "host"
-      source = "postgres-log"
+      type   = "host"
+      source = "${postgres_log_host_volume_name}"
     }
     task "${job_name}" {
       driver = "exec"
