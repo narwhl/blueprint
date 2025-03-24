@@ -1,0 +1,80 @@
+---
+- name: Add HashiCorp GPG key
+  ansible.builtin.apt_key:
+    url: https://apt.releases.hashicorp.com/gpg
+    keyring: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Add HashiCorp GPG Key
+  ansible.builtin.rpm_key:
+    state: present
+    key: https://rpm.releases.hashicorp.com/gpg
+  when: ansible_os_family == "RedHat"
+
+- name: Add HashiCorp repository
+  ansible.builtin.apt_repository:
+    repo: deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main
+    filename: hashicorp
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Install Consul
+  ansible.builtin.package:
+    name: consul
+    state: present
+
+- name: Copy custom consul.hcl configuration file
+  ansible.builtin.template:
+    src: consul.hcl.j2
+    dest: /etc/consul.d/consul.hcl
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Copy custom server.hcl configuration file
+  ansible.builtin.template:
+    src: server.hcl.j2
+    dest: /etc/consul.d/server.hcl
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Create TLS directory if it does not exist
+  ansible.builtin.file:
+    path: /etc/consul.d/tls
+    state: directory
+    mode: "0755"
+
+- name: Copy TLS certificate and key
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/etc/consul.d/tls/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - server.crt
+    - server.key
+
+- name: Copy custom tls.hcl configuration file
+  ansible.builtin.template:
+    src: tls.hcl.j2
+    dest: /etc/consul.d/tls.hcl
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Copy shell script for Consul
+  ansible.builtin.copy:
+    src: consul.sh
+    dest: /etc/profile.d/consul.sh
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Restart Consul
+  ansible.builtin.systemd:
+    name: consul
+    enabled: true
+    state: restarted

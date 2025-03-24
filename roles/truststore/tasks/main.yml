@@ -1,0 +1,9 @@
+---
+- name: Copy CA certificates to the server
+  ansible.builtin.copy:
+    content: "{{ cert_pem }}"
+    dest: "/usr/local/share/ca-certificates/{{ cert_pem | md5 }}.crt"
+    mode: "0644"
+
+- name: Update CA certificates
+  ansible.builtin.command: update-ca-certificates
