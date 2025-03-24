@@ -1,0 +1,103 @@
+---
+- name: Add HashiCorp GPG key
+  ansible.builtin.apt_key:
+    url: https://apt.releases.hashicorp.com/gpg
+    keyring: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+    state: present
+
+- name: Add Docker GPG key
+  ansible.builtin.apt_key:
+    url: https://download.docker.com/linux/debian/gpg
+    keyring: /usr/share/keyrings/docker.asc
+    state: present
+
+- name: Add HashiCorp repository
+  ansible.builtin.apt_repository:
+    repo: deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main
+    filename: hashicorp
+    state: present
+
+- name: Add Docker repository
+  ansible.builtin.apt_repository:
+    repo: deb [signed-by=/usr/share/keyrings/docker.asc] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable
+    filename: docker
+    state: present
+
+- name: Install Nomad
+  ansible.builtin.apt:
+    name:
+      - nomad
+      - docker-ce
+      - containernetworking-plugins
+    state: present
+
+- name: Copy shell script for Nomad
+  ansible.builtin.template:
+    src: nomad.sh.j2
+    dest: /etc/profile.d/nomad.sh
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Create nomad volume directories if it does not exist
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: "0755"
+  when: ansible_hostname == item.host
+  loop: "{{ nomad_host_volumes }}"
+
+- name: Copy custom nomad.hcl configuration file
+  ansible.builtin.template:
+    src: nomad.hcl.j2
+    dest: /etc/nomad.d/nomad.hcl
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Copy custom server.hcl configuration file
+  ansible.builtin.template:
+    src: server.hcl.j2
+    dest: /etc/nomad.d/server.hcl
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Copy custom plugins.hcl configuration file
+  ansible.builtin.copy:
+    src: plugins.hcl
+    dest: /etc/nomad.d/plugins.hcl
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Create TLS directory if it does not exist
+  ansible.builtin.file:
+    path: /etc/nomad.d/tls
+    state: directory
+    mode: "0755"
+
+- name: Copy TLS certificate and key
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/etc/nomad.d/tls/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - server.crt
+    - server.key
+
+- name: Copy custom tls.hcl configuration file
+  ansible.builtin.template:
+    src: tls.hcl.j2
+    dest: /etc/nomad.d/tls.hcl
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Restart Nomad
+  ansible.builtin.systemd:
+    name: nomad
+    enabled: true
+    state: restarted

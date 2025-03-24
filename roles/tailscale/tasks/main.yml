@@ -1,0 +1,35 @@
+---
+- name: Configure sysctl for IPv4 forwarding
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+    state: present
+    sysctl_file: "{{ sysctl_path }}"
+    sysctl_set: true
+    reload: true
+
+- name: Configure sysctl for IPv6 forwarding
+  ansible.posix.sysctl:
+    name: net.ipv6.conf.all.forwarding
+    value: "1"
+    state: present
+    sysctl_file: "{{ sysctl_path }}"
+    sysctl_set: true
+    reload: true
+
+- name: Add Tailscale GPG key
+  ansible.builtin.apt_key:
+    url: https://pkgs.tailscale.com/stable/debian/{{ ansible_distribution_release }}.noarmor.gpg
+    keyring: "{{ keyring_path }}"
+    state: present
+
+- name: Add Tailscale repository
+  ansible.builtin.apt_repository:
+    repo: deb [signed-by={{ keyring_path }}] https://pkgs.tailscale.com/stable/debian {{ ansible_distribution_release }} main
+    filename: tailscale
+    state: present
+
+- name: Install Tailscale
+  ansible.builtin.apt:
+    name: tailscale
+    state: present
