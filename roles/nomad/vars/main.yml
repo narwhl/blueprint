@@ -1,0 +1,27 @@
+---
+nomad_bootstrap_expect: 1
+nomad_datacenter: dc1
+nomad_data_dir: "/opt/nomad"
+nomad_log_level: "info"
+nomad_cni_path: "/usr/lib/cni"
+nomad_ca_file_path: "/usr/local/share/ca-certificates/root_ca.crt"
+nomad_cert_pem: ""
+nomad_cert_file_path: "/etc/nomad.d/tls/server.crt"
+nomad_key_pem: ""
+nomad_key_file_path: "/etc/nomad.d/tls/server.key"
+plugin_docker_allow_caps:
+  - "audit_write"
+  - "chown"
+  - "dac_override"
+  - "fowner"
+  - "fsetid"
+  - "kill"
+  - "mknod"
+  - "net_bind_service"
+  - "setfcap"
+  - "setgid"
+  - "setpcap"
+  - "setuid"
+  - "sys_chroot"
+  - "ipc_lock"
+plugin_docker_allow_privileged: true
