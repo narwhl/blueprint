@@ -3,6 +3,13 @@ job "${job_name}" {
   type        = "service"
   namespace   = "${namespace}"
 
+  update {
+    max_parallel     = 1
+    min_healthy_time = "30s"
+    healthy_deadline = "15m"
+    auto_revert = true
+  }
+
   group "matchbox" {
 
     network {
@@ -110,13 +117,6 @@ job "${job_name}" {
           source = "local/ca.crt"
           target = "/etc/matchbox/ca.crt"
         }
-      }
-
-      update {
-        max_parallel     = 1
-        min_healthy_time = "30s"
-        healthy_deadline = "15m"
-        auto_revert = true
       }
 
       template {
