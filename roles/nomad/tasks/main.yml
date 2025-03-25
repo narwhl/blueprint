@@ -1,27 +1,19 @@
 ---
-- name: Add HashiCorp GPG key
+- name: Add Vendor GPG keys 
   ansible.builtin.apt_key:
-    url: https://apt.releases.hashicorp.com/gpg
-    keyring: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+    url: "{{ item.key_url }}"
+    keyring: "{{ item.keyring_path }}"
     state: present
+  loop: apt_sources
 
-- name: Add Docker GPG key
-  ansible.builtin.apt_key:
-    url: https://download.docker.com/linux/debian/gpg
-    keyring: /usr/share/keyrings/docker.asc
-    state: present
-
-- name: Add HashiCorp repository
-  ansible.builtin.apt_repository:
-    repo: deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main
-    filename: hashicorp
-    state: present
-
-- name: Add Docker repository
-  ansible.builtin.apt_repository:
-    repo: deb [signed-by=/usr/share/keyrings/docker.asc] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable
-    filename: docker
-    state: present
+- name: Add Vendor Repositories
+  ansible.builtin.template:
+    src: repo.sources.j2
+    dest: /etc/apt/sources.list.d/{{ item.name }}.sources
+    owner: root
+    group: root
+    mode: "0644"
+  loop: apt_sources
 
 - name: Install Nomad
   ansible.builtin.apt:
@@ -37,6 +29,12 @@
     dest: /etc/profile.d/nomad.sh
     owner: root
     group: root
+    mode: "0755"
+
+- name: Create nomad configuration directory
+  ansible.builtin.file:
+    path: /etc/nomad.d
+    state: directory
     mode: "0755"
 
 - name: Create nomad volume directories if it does not exist
@@ -62,6 +60,7 @@
     owner: root
     group: root
     mode: "0644"
+  when: nomad_server_enabled
 
 - name: Copy custom plugins.hcl configuration file
   ansible.builtin.copy:
@@ -76,6 +75,7 @@
     path: /etc/nomad.d/tls
     state: directory
     mode: "0755"
+  when: nomad_tls_enabled
 
 - name: Copy TLS certificate and key
   ansible.builtin.copy:
@@ -87,6 +87,7 @@
   loop:
     - server.crt
     - server.key
+  when: nomad_tls_enabled
 
 - name: Copy custom tls.hcl configuration file
   ansible.builtin.template:
@@ -95,6 +96,7 @@
     owner: root
     group: root
     mode: "0644"
+  when: nomad_tls_enabled
 
 - name: Restart Nomad
   ansible.builtin.systemd:
