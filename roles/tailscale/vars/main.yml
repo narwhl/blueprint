@@ -1,2 +1,4 @@
 keyring_path: /usr/share/keyrings/tailscale-archive-keyring.gpg
 sysctl_path: /etc/sysctl.d/99-tailscale.conf
+repo_uri: https://pkgs.tailscale.com/stable
+release_components: main

@@ -22,14 +22,22 @@
     url: https://pkgs.tailscale.com/stable/debian/{{ ansible_distribution_release }}.noarmor.gpg
     keyring: "{{ keyring_path }}"
     state: present
+  when: ansible_os_family == "Debian"
 
 - name: Add Tailscale repository
-  ansible.builtin.apt_repository:
-    repo: deb [signed-by={{ keyring_path }}] https://pkgs.tailscale.com/stable/debian {{ ansible_distribution_release }} main
-    filename: tailscale
-    state: present
+  ansible.builtin.template:
+    src: repo.sources.j2
+    dest: /etc/apt/sources.list.d/tailscale.sources
+    owner: root
+    group: root
+    mode: "0644"
+  when: ansible_os_family == "Debian"
+
+- name: Add Tailscale repository
+  ansible.builtin.shell: dnf config-manager --add-repo {{ repo_uri }}/rhel/{{ ansible_distribution_major_version }}/tailscale.repo
+  when: ansible_os_family == "RedHat"
 
 - name: Install Tailscale
-  ansible.builtin.apt:
+  ansible.builtin.package:
     name: tailscale
     state: present
