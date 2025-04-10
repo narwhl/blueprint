@@ -32,6 +32,10 @@ module "dns" {
 
 - `tailscale_version`: `(string: "stable")` - Version of Tailscale to deploy.
 
+- `tailscale_oauth_client_id`: `(string: <required>)` - Tailscale OAuth client ID.
+
+- `tailscale_oauth_client_secret`: `(string: <required>)` - Tailscale OAuth client secret.
+
 - `tailscale_auth_key`: `(string: <required>)` - Tailscale authentication key.
 
 - `resources`: `(object: <optional>)` - Resources to allocate to the job.

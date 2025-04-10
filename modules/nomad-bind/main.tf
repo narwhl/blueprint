@@ -20,6 +20,11 @@ resource "nomad_job" "bind" {
     zones                = var.zones
     upstream_nameservers = var.upstream_nameservers
     resources            = var.resources
+    split_dns_vars = yamlencode({
+      digest = base64encode("${var.tailscale_oauth_client_id}:${var.tailscale_oauth_client_secret}")
+      domain = ".internal"
+    })
+    split_dns_provisioner = file("${path.module}/templates/playbook.yml")
     secret_key = templatefile("${path.module}/templates/named.conf.key.tftpl", {
       job_name  = var.job_name
       name      = var.tsig_key_name

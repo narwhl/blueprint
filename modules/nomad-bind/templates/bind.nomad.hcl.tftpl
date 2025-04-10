@@ -36,6 +36,35 @@ job "${job_name}" {
       }
     }
 
+    task "ansible" {
+      driver = "docker"
+
+      lifecycle {
+        hook    = "poststart"
+        sidecar = false
+      }
+
+      config {
+        image = "alpine/ansible:latest"
+        command = "ansible-playbook"
+        args  = ["local/playbook.yaml"]
+      }
+
+      template {
+        data        = <<-EOF
+${split_dns_vars}
+EOF
+        destination = "local/vars.yaml"
+      }
+
+      template {
+        data        = <<-EOF
+${split_dns_provisioner}
+EOF
+        destination = "local/playbook.yaml"
+      }
+    }
+
     task "bind" {
       driver = "docker"
 
