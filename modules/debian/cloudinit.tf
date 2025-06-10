@@ -1,26 +1,3 @@
-locals {
-  package_preset = [
-    "apt-transport-https",
-    "ca-certificates",
-    "curl",
-    "dnsutils",
-    "gnupg",
-    "git",
-    "gzip",
-    "lsb-release",
-    "net-tools",
-    "qemu-guest-agent",
-    "rsync",
-    "software-properties-common",
-    "sudo",
-    "tar",
-    "vim",
-    "unzip",
-    "zip",
-    "zstd"
-  ]
-}
-
 data "cloudinit_config" "user_data" {
   gzip          = false
   base64_encode = var.base64_encode
@@ -50,8 +27,6 @@ data "cloudinit_config" "user_data" {
             users = local.users
             bootcmd = [
               "echo 'blacklist rfkill\nblacklist cfg80211' | tee -a /etc/modprobe.d/blacklist.conf",
-              "apt-get update && apt-get install -y ${join(" ", local.package_preset)} ${contains(flatten(var.substrates.*.install.repositories), "nvidia-container-toolkit") ? "linux-headers-$(uname -r)" : ""}",
-
             ]
             cloud_init_modules = concat(
               [
@@ -86,6 +61,10 @@ data "cloudinit_config" "user_data" {
             fs_setup         = local.filesystems
             write_files      = local.files
             runcmd = concat(
+              [
+                "export RELEASE=$(grep 'VERSION_CODENAME=' /etc/os-release |awk -F= {' print $2'})"
+              ],
+              
               [for dir in local.directories : "mkdir -m ${dir.mode} -p ${dir.path}"],
               [for dir in local.directories : "chown -R ${dir.owner}:${dir.group} ${dir.path}"],
               var.startup_script.override_default ? [] : [

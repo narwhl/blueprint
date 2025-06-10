@@ -135,6 +135,41 @@ locals {
           defer   = false
         }
       ],
+      [
+        for repository in data.http.gpg_keys : {
+          path    = "/usr/share/keyrings/${repository.key}.gpg"
+          content = repository.response_body
+          owner   = "root"
+          group   = "root"
+          mode    = "0644"
+          defer   = false
+        }
+      ],
+      [
+        for repository in distinct(
+          concat(
+            [
+              "docker",
+            ],
+            flatten(var.substrates.*.install.repositories)
+          )) : {
+          path = "/etc/apt/sources.list.d/${repository}.sources"
+          content = templatefile("${path.module}/templates/deb822.sources.tftpl", {
+            source = merge(
+              {
+                for attr, val in jsondecode(data.http.upstream.response_body).repositories[repository].apt : attr => val if attr != "signing_key_url"
+              },
+              {
+                key_file = format("/usr/share/keyrings/%s.gpg", repository)
+              }
+            )
+          })
+          owner = "root"
+          group = "root"
+          mode  = "0644"
+          defer = false
+        }
+      ],
       flatten(var.substrates.*.files)
       ) : {
       encoding    = "b64"
@@ -146,27 +181,9 @@ locals {
     } if file.enabled == true && !startswith(file.content, "https://") && strcontains(file.tags, "cloud-init")
   ]
   directories = [for dir in flatten(var.substrates.*.directories) : dir if dir.enabled == true && strcontains(dir.tags, "cloud-init")]
-  repositories = merge(
-    {
-      for repository in distinct(
-        concat(
-          [
-            "docker",
-          ],
-          flatten(var.substrates.*.install.repositories)
-        )
-        ) : "${repository}.list" => {
-        key = data.http.gpg_keys[repository].response_body
-        source = format(
-          "deb [arch=amd64 signed-by=$KEY_FILE] %s",
-          jsondecode(data.http.upstream.response_body).repositories[repository].apt.source
-        )
-      }
-    },
-    contains(flatten(var.substrates.*.install.repositories), "nvidia-container-toolkit") ? {
-      "non-free.list" = {
-        source = "deb http://deb.debian.org/debian/ bookworm main contrib non-free non-free-firmware"
-      }
-    } : {}
-  )
+  repositories = contains(flatten(var.substrates.*.install.repositories), "nvidia-container-toolkit") ? {
+    "non-free.list" = {
+      source = "deb http://deb.debian.org/debian/ bookworm main contrib non-free non-free-firmware"
+    }
+  } : {}
 }
