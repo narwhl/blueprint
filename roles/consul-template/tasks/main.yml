@@ -1,0 +1,32 @@
+---
+- name: Add HashiCorp GPG key
+  ansible.builtin.apt_key:
+    url: "{{ repo_uri }}/gpg"
+    keyring: "{{ keyring_path }}"
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Add HashiCorp repository
+  ansible.builtin.deb822_repository:
+    name: hashicorp
+    types: deb
+    uris: "{{ repo_uri }}"
+    suites: "{{ ansible_distribution_release }}"
+    components:
+      - main
+    signed_by: "{{ keyring_path }}"
+  when: ansible_os_family == "Debian"
+
+- name: Update APT cache
+  ansible.builtin.apt:
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Add Hashicorp repository
+  ansible.builtin.shell: dnf config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+  when: ansible_os_family == "RedHat"
+
+- name: Install Consul-Template
+  ansible.builtin.package:
+    name: consul-template
+    state: present

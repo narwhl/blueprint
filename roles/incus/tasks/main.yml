@@ -1,0 +1,28 @@
+---
+- name: Add Zabbly GPG key
+  ansible.builtin.apt_key:
+    url: "{{ repo_uri }}/key.asc"
+    keyring: "{{ keyring_path }}"
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Add Zabbly repository
+  ansible.builtin.deb822_repository:
+    name: zabbly
+    types: deb
+    uris: "{{ repo_uri }}/incus/stable"
+    suites: "{{ ansible_distribution_release }}"
+    components:
+      - main
+    signed_by: "{{ keyring_path }}"
+  when: ansible_os_family == "Debian"
+
+- name: Update APT cache
+  ansible.builtin.apt:
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Install Incus
+  ansible.builtin.package:
+    name: incus
+    state: present

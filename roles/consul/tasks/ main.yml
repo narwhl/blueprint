@@ -1,18 +1,25 @@
 ---
 - name: Add HashiCorp GPG key
   ansible.builtin.apt_key:
-    url: https://apt.releases.hashicorp.com/gpg
-    keyring: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+    url: "{{ repo_uri }}/gpg"
+    keyring: "{{ keyring_path }}"
     state: present
   when: ansible_os_family == "Debian"
 
 - name: Add HashiCorp repository
-  ansible.builtin.template:
-    src: repo.sources.j2
-    dest: /etc/apt/sources.list.d/hashicorp.sources
-    owner: root
-    group: root
-    mode: "0644"
+  ansible.builtin.deb822_repository:
+    name: hashicorp
+    types: deb
+    uris: "{{ repo_uri }}"
+    suites: "{{ ansible_distribution_release }}"
+    components:
+      - main
+    signed_by: "{{ keyring_path }}"
+  when: ansible_os_family == "Debian"
+
+- name: Update APT cache
+  ansible.builtin.apt:
+    update_cache: yes
   when: ansible_os_family == "Debian"
 
 - name: Add Hashicorp repository

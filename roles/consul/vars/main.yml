@@ -7,3 +7,7 @@ consul_tls_enabled: false
 consul_cert_file_path: /etc/consul.d/tls/server.crt
 consul_key_file_path: /etc/consul.d/tls/server.key
 consul_ca_file_path: /usr/local/share/ca-certificates/root_ca.crt
+repo_uri: https://apt.releases.hashicorp.com
+release_components:
+  - main
+keyring_path: /usr/share/keyrings/hashicorp-archive-keyring.gpg

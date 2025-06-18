@@ -1,6 +1,6 @@
 #SPDX-License-Identifier: MIT-0
 galaxy_info:
-  role_name: tailscale
+  role_name: nomad
   author: narwhl
   description: Install and configure Tailscale on a system.
 
