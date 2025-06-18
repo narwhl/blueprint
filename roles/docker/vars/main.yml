@@ -1,2 +1,4 @@
 repo_uri: "https://download.docker.com/linux"
+release_components:
+  - stable
 keyring_path: "/usr/share/keyrings/docker-archive-keyring.gpg"
