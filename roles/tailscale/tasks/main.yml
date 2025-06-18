@@ -19,18 +19,20 @@
 
 - name: Add Tailscale GPG key
   ansible.builtin.apt_key:
-    url: https://pkgs.tailscale.com/stable/debian/{{ ansible_distribution_release }}.noarmor.gpg
-    keyring: "{{ keyring_path }}"
+    url: "{{ repo_uri }}/{{ ansible_distribution | lower }}/{{ ansible_distribution_release }}.gpg"
+    keyring: "{{ keyring_path}}"
     state: present
   when: ansible_os_family == "Debian"
 
 - name: Add Tailscale repository
-  ansible.builtin.template:
-    src: repo.sources.j2
-    dest: /etc/apt/sources.list.d/tailscale.sources
-    owner: root
-    group: root
-    mode: "0644"
+  ansible.builtin.deb822_repository:
+    name: tailscale
+    types: deb
+    uris: "{{ repo_uri }}/{{ ansible_distribution | lower }}"
+    suites: "{{ ansible_distribution_release }}"
+    components:
+      - main
+    signed_by: "{{ keyring_path }}"
   when: ansible_os_family == "Debian"
 
 - name: Update APT cache

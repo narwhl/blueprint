@@ -1,0 +1,9 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  tasks:
+    - name: Testing role
+      ansible.builtin.include_role:
+        name: narwhl.nomad
+        tasks_from: main.yml
