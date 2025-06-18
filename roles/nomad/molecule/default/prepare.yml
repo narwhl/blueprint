@@ -1,0 +1,11 @@
+---
+- name: Prepare
+  hosts: all
+  tasks:
+    - name: Update APT cache
+      ansible.builtin.apt:
+        update_cache: yes
+    - name: Install GPG
+      ansible.builtin.package:
+        name: gnupg
+        state: present

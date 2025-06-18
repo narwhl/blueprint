@@ -1,25 +1,35 @@
 ---
-- name: Add Vendor GPG keys 
+- name: Add HashiCorp GPG key
   ansible.builtin.apt_key:
-    url: "{{ item.key_url }}"
-    keyring: "{{ item.keyring_path }}"
+    url: "{{ repo_uri }}/gpg"
+    keyring: "{{ keyring_path }}"
     state: present
-  loop: apt_sources
+  when: ansible_os_family == "Debian"
 
-- name: Add Vendor Repositories
-  ansible.builtin.template:
-    src: repo.sources.j2
-    dest: /etc/apt/sources.list.d/{{ item.name }}.sources
-    owner: root
-    group: root
-    mode: "0644"
-  loop: apt_sources
+- name: Add HashiCorp repository
+  ansible.builtin.deb822_repository:
+    name: hashicorp
+    types: deb
+    uris: "{{ repo_uri }}"
+    suites: "{{ ansible_distribution_release }}"
+    components:
+      - main
+    signed_by: "{{ keyring_path }}"
+  when: ansible_os_family == "Debian"
+
+- name: Update APT cache
+  ansible.builtin.apt:
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Add Hashicorp repository
+  ansible.builtin.shell: dnf config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+  when: ansible_os_family == "RedHat"
 
 - name: Install Nomad
   ansible.builtin.package:
     name:
       - nomad
-      - docker-ce
       - containernetworking-plugins
     state: present
 
@@ -36,14 +46,6 @@
     path: /etc/nomad.d
     state: directory
     mode: "0755"
-
-- name: Create nomad volume directories if it does not exist
-  ansible.builtin.file:
-    path: "{{ item.path }}"
-    state: directory
-    mode: "0755"
-  when: ansible_hostname == item.host
-  loop: "{{ nomad_host_volumes }}"
 
 - name: Copy custom nomad.hcl configuration file
   ansible.builtin.template:
