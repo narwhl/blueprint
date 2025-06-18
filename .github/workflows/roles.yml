@@ -26,10 +26,15 @@ jobs:
       - name: Install Ansible and its dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ansible ansible-lint molecule[docker]
+          pip install ansible ansible-lint molecule[docker] docker
 
-      - name: Run checks against all roles
+      - name: Run Molecule tests for all roles
         run: |
-          for role in $(find roles -name "main.yml"); do
-            ansible-playbook --syntax-check "$role"
+          for role in roles/*; do
+            if [ -d "$role/molecule" ]; then
+              echo "Running Molecule for $role"
+              (cd "$role" && molecule test)
+            else
+              echo "No Molecule scenario found in $role, skipping."
+            fi
           done

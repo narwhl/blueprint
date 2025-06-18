@@ -12,8 +12,7 @@
     types: deb
     uris: "{{ repo_uri }}/{{ ansible_distribution | lower }}"
     suites: "{{ ansible_distribution_release }}"
-    components:
-      - stable
+    components: "{{ release_components }}"
     signed_by: "{{ keyring_path }}"
   when: ansible_os_family == "Debian"
 

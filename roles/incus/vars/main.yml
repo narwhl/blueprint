@@ -1,3 +1,4 @@
-repo_uri: https://pkgs.zabbly.com/
-release_components: main
+repo_uri: https://pkgs.zabbly.com
+release_components:
+  - main
 keyring_path: /usr/share/keyrings/zabbly-archive-keyring.gpg
