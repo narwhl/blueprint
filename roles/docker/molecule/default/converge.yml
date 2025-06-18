@@ -5,5 +5,5 @@
   tasks:
     - name: Testing role
       ansible.builtin.include_role:
-        name: narwhl.docker
+        name: docker
         tasks_from: main.yml

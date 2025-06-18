@@ -2,7 +2,7 @@
 galaxy_info:
   role_name: consul
   author: narwhl
-  description: Install and configure Tailscale on a system.
+  description: Install and configure Consul on a system.
 
   license: MIT
 
