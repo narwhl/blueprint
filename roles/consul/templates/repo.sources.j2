@@ -1,6 +1,0 @@
-Enabled: yes
-Types: deb
-URIs: {{ item.repo_uri }}/{{ ansible_distribution | lower }}
-Suites: {{ ansible_distribution_release }}
-Components: {{ item.repo_components }}
-Signed-By: {{ item.keyring_path }}

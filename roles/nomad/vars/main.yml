@@ -12,7 +12,6 @@ nomad_cert_pem: ""
 nomad_cert_file_path: "/etc/nomad.d/tls/server.crt"
 nomad_key_pem: ""
 nomad_key_file_path: "/etc/nomad.d/tls/server.key"
-nomad_host_volumes: []
 plugin_docker_allow_caps:
   - "audit_write"
   - "chown"
@@ -29,14 +28,7 @@ plugin_docker_allow_caps:
   - "sys_chroot"
   - "ipc_lock"
 plugin_docker_allow_privileged: true
-apt_sources:
-  - name: hashicorp
-    key_url: https://apt.releases.hashicorp.com/gpg
-    keyring_path: /usr/share/keyrings/hashicorp-archive-keyring.gpg
-    repo_uri: https://apt.releases.hashicorp.com
-    repo_components: main
-  - name: docker
-    key_url: https://download.docker.com/linux/debian/gpg
-    keyring_path: /usr/share/keyrings/docker.asc
-    repo_uri: https://download.docker.com/linux/debian
-    repo_components: stable
+repo_uri: https://apt.releases.hashicorp.com
+release_components:
+  - main
+keyring_path: /usr/share/keyrings/hashicorp-archive-keyring.gpg
