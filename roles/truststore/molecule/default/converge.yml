@@ -3,9 +3,10 @@
   hosts: all
   become: true
   tasks:
-    - name: "Include truststore"
+    - name: Testing role
       ansible.builtin.include_role:
-        name: "truststore"
+        name: truststore
+        tasks_from: main.yml
       vars:
         cert_pem: |
           -----BEGIN CERTIFICATE-----
