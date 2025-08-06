@@ -2,8 +2,8 @@ datacenter     = "{{ consul_datacenter }}"
 data_dir       = "{{ consul_data_dir }}"
 client_addr    = "0.0.0.0"
 {% raw %}
-bind_addr      = "{{  GetInterfaceIP `tailscale0` }}"
-advertise_addr = "{{  GetInterfaceIP `tailscale0` }}"
+bind_addr      = "{{ GetPrivateIP }}"
+advertise_addr = "{{ GetPrivateIP }}"
 {% endraw %}
 retry_join     = {{ consul_retry_join }}
 log_level      = "{{ consul_log_level }}"
