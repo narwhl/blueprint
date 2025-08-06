@@ -7,7 +7,7 @@ consul_tls_enabled: false
 consul_cert_file_path: /etc/consul.d/tls/server.crt
 consul_key_file_path: /etc/consul.d/tls/server.key
 consul_ca_file_path: /usr/local/share/ca-certificates/root_ca.crt
-consul_retry_join: []  # List of addresses to join, e.g., ["10.0.1.10", "10.0.1.11"]
+consul_retry_join: []  # List of addresses to join
 consul_gossip_key: ""  # 32-byte base64 encoded key for gossip encryption
 repo_uri: https://apt.releases.hashicorp.com
 release_components:

@@ -5,7 +5,10 @@
     - name: Update APT cache
       ansible.builtin.apt:
         update_cache: yes
-    - name: Install GPG
+    - name: Install required packages
       ansible.builtin.package:
-        name: gnupg
+        name:
+          - gnupg
+          - python3-debian
+          - systemd
         state: present
