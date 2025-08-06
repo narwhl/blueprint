@@ -7,7 +7,9 @@ advertise_addr = "{{ GetPrivateIP }}"
 {% endraw %}
 retry_join     = {{ consul_retry_join }}
 log_level      = "{{ consul_log_level }}"
+{% if consul_gossip_key %}
 encrypt        = "{{ consul_gossip_key }}"
+{% endif %}
 
 # Enable non-TLS grpc port for Consul Connect in Nomad
 # TODO: Setup TLS grpc connection from Nomad to Consul
