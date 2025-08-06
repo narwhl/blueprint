@@ -30,6 +30,15 @@
     name: consul-template
     state: present
 
+- name: Create consul-template user
+  ansible.builtin.user:
+    name: consul-template
+    system: true
+    shell: /bin/false
+    home: /var/lib/consul-template
+    createhome: true
+    state: present
+
 - name: Create consul-template configuration directory
   ansible.builtin.file:
     path: /etc/consul-template.d
