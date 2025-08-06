@@ -1,6 +1,7 @@
 ---
 galaxy_info:
   role_name: truststore
+  namespace: blueprint
   author: Blueprint Infrastructure
   description: Manages CA certificates in the system truststore
   company: Blueprint
