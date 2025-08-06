@@ -64,8 +64,8 @@
   when: nomad_server_enabled
 
 - name: Copy custom plugins.hcl configuration file
-  ansible.builtin.copy:
-    src: plugins.hcl
+  ansible.builtin.template:
+    src: plugins.hcl.j2
     dest: /etc/nomad.d/plugins.hcl
     owner: root
     group: root

@@ -1,1 +1,20 @@
+# Single certificate content (legacy support)
 cert_pem: ""
+
+# Multiple certificates (list of objects with 'name' and 'content' keys)
+# ca_certificates:
+#   - name: "example-ca"
+#     content: |
+#       -----BEGIN CERTIFICATE-----
+#       ... certificate content ...
+#       -----END CERTIFICATE-----
+#   - name: "another-ca"
+#     content: |
+#       -----BEGIN CERTIFICATE-----
+#       ... certificate content ...
+#       -----END CERTIFICATE-----
+
+# List of certificate names to remove
+# remove_ca_certificates:
+#   - "old-ca-name"
+#   - "expired-ca-name"
