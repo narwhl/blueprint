@@ -1,6 +1,7 @@
 #SPDX-License-Identifier: MIT-0
 galaxy_info:
-  role_name: consul-template
+  role_name: consul_template
+  namespace: narwhl
   author: narwhl
   description: Install and configure Consul-Template on a system.
 
