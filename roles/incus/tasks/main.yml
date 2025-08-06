@@ -25,3 +25,60 @@
   ansible.builtin.package:
     name: incus
     state: present
+
+- name: Create incus group
+  ansible.builtin.group:
+    name: incus-admin
+    state: present
+
+- name: Add users to incus-admin group
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: incus-admin
+    append: yes
+  loop: "{{ incus_admin_users }}"
+  when: incus_admin_users is defined and incus_admin_users | length > 0
+
+- name: Start and enable Incus service
+  ansible.builtin.systemd:
+    name: incus
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  notify: restart incus
+
+- name: Wait for Incus to be ready
+  ansible.builtin.wait_for:
+    path: /var/lib/incus/unix.socket
+    timeout: 30
+
+- name: Initialize Incus (if not already initialized)
+  ansible.builtin.command:
+    cmd: incus admin init --auto
+  register: incus_init_result
+  changed_when: incus_init_result.rc == 0
+  failed_when: incus_init_result.rc != 0 and 'already been configured' not in incus_init_result.stderr
+  when: incus_auto_init | default(true)
+
+- name: Configure Incus storage pool
+  ansible.builtin.command:
+    cmd: "incus storage create {{ incus_storage_pool.name }} {{ incus_storage_pool.driver }} {{ incus_storage_pool.config | default('') }}"
+  register: storage_pool_result
+  changed_when: storage_pool_result.rc == 0
+  failed_when: storage_pool_result.rc != 0 and 'already exists' not in storage_pool_result.stderr
+  when: incus_storage_pool is defined
+
+- name: Configure Incus network
+  ansible.builtin.command:
+    cmd: "incus network create {{ incus_network.name }} {{ incus_network.config | default('') }}"
+  register: network_result
+  changed_when: network_result.rc == 0
+  failed_when: network_result.rc != 0 and 'already exists' not in network_result.stderr
+  when: incus_network is defined
+
+- name: Set Incus server configuration
+  ansible.builtin.command:
+    cmd: "incus config set {{ item.key }} {{ item.value }}"
+  loop: "{{ incus_server_config | dict2items }}"
+  when: incus_server_config is defined
+  notify: restart incus

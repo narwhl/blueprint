@@ -1,0 +1,6 @@
+---
+# Incus admin users (empty by default)
+incus_admin_users: []
+
+# Auto-initialize Incus
+incus_auto_init: true

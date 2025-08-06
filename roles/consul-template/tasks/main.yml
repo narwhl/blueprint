@@ -29,3 +29,44 @@
   ansible.builtin.package:
     name: consul-template
     state: present
+
+- name: Create consul-template configuration directory
+  ansible.builtin.file:
+    path: /etc/consul-template.d
+    state: directory
+    mode: "0755"
+
+- name: Create consul-template data directory
+  ansible.builtin.file:
+    path: /opt/consul-template
+    state: directory
+    mode: "0755"
+    owner: consul-template
+    group: consul-template
+
+- name: Copy consul-template configuration
+  ansible.builtin.template:
+    src: consul-template.hcl.j2
+    dest: /etc/consul-template.d/consul-template.hcl
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart consul-template
+
+- name: Create systemd service file for consul-template
+  ansible.builtin.template:
+    src: consul-template.service.j2
+    dest: /etc/systemd/system/consul-template.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart consul-template
+
+- name: Enable and start consul-template service
+  ansible.builtin.systemd:
+    name: consul-template
+    enabled: true
+    state: started
+    daemon_reload: true

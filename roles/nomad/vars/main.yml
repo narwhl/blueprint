@@ -12,6 +12,8 @@ nomad_cert_pem: ""
 nomad_cert_file_path: "/etc/nomad.d/tls/server.crt"
 nomad_key_pem: ""
 nomad_key_file_path: "/etc/nomad.d/tls/server.key"
+nomad_gossip_key: ""  # 32-byte base64 encoded key for gossip encryption
+nomad_host_volumes: []  # List of host volumes, e.g., [{name: "data", path: "/opt/data", host: "hostname"}]
 plugin_docker_allow_caps:
   - "audit_write"
   - "chown"

@@ -1,0 +1,9 @@
+---
+# Single certificate content (legacy support)
+cert_pem: ""
+
+# Multiple certificates (empty by default)
+ca_certificates: []
+
+# Certificates to remove (empty by default)
+remove_ca_certificates: []

@@ -1,0 +1,20 @@
+[Unit]
+Description=consul-template
+Documentation=https://github.com/hashicorp/consul-template
+Requires=network-online.target
+After=network-online.target
+ConditionFileNotEmpty=/etc/consul-template.d/consul-template.hcl
+
+[Service]
+Type=notify
+ExecStart=/usr/bin/consul-template -config=/etc/consul-template.d/consul-template.hcl
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+LimitNOFILE=65536
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=consul-template
+
+[Install]
+WantedBy=multi-user.target

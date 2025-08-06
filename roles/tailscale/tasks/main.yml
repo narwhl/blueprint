@@ -47,3 +47,57 @@
   ansible.builtin.package:
     name: tailscale
     state: present
+
+- name: Start and enable Tailscale service
+  ansible.builtin.systemd:
+    name: tailscaled
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  notify: restart tailscaled
+
+- name: Check if Tailscale is already authenticated
+  ansible.builtin.command:
+    cmd: tailscale status --json
+  register: tailscale_status
+  changed_when: false
+  failed_when: false
+
+- name: Authenticate with Tailscale using auth key
+  ansible.builtin.command:
+    cmd: "tailscale up --authkey={{ tailscale_auth_key }} {{ tailscale_up_flags | default('') }}"
+  register: tailscale_auth
+  when: 
+    - tailscale_auth_key is defined
+    - tailscale_status.rc != 0 or (tailscale_status.stdout | from_json).BackendState != "Running"
+  notify: restart tailscaled
+
+- name: Authenticate with Tailscale using login server
+  ansible.builtin.command:
+    cmd: "tailscale up --login-server={{ tailscale_login_server }} {{ tailscale_up_flags | default('') }}"
+  register: tailscale_auth_server
+  when: 
+    - tailscale_login_server is defined
+    - tailscale_auth_key is not defined
+    - tailscale_status.rc != 0 or (tailscale_status.stdout | from_json).BackendState != "Running"
+  notify: restart tailscaled
+
+- name: Set Tailscale hostname
+  ansible.builtin.command:
+    cmd: "tailscale set --hostname {{ tailscale_hostname }}"
+  when: tailscale_hostname is defined
+
+- name: Configure Tailscale exit node
+  ansible.builtin.command:
+    cmd: "tailscale set --advertise-exit-node"
+  when: tailscale_exit_node | default(false)
+
+- name: Configure Tailscale subnet routes
+  ansible.builtin.command:
+    cmd: "tailscale set --advertise-routes={{ tailscale_subnet_routes | join(',') }}"
+  when: tailscale_subnet_routes is defined and tailscale_subnet_routes | length > 0
+
+- name: Configure Tailscale SSH
+  ansible.builtin.command:
+    cmd: "tailscale set --ssh={{ tailscale_ssh | default(false) | lower }}"
+  when: tailscale_ssh is defined
