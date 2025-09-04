@@ -105,6 +105,10 @@ resource "proxmox_virtual_environment_vm" "this" {
   }
 
   lifecycle {
+    ignore_changes = [ 
+      ipv4_addresses,
+      network_interface_names
+    ]
     replace_triggered_by = [
       proxmox_virtual_environment_file.provisioning_config
     ]
