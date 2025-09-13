@@ -1,8 +1,7 @@
 locals {
-  nomad_var_template     = "{{ with nomadVar \"nomad/jobs/${var.job_name}\" }}{{ .%s }}{{ end }}"
-  nomad_service_template = <<-EOH
-  {{ with service "%s" }}{{ with index . 0 }}{{ .Address }}:{{ .Port }}{{ end }}{{ end }}"
-  EOH
+  nomad_var_template     = "{{ with nomadVar `nomad/jobs/${var.job_name}` }}{{ .%s }}{{ end }}"
+  nomad_service_template = "{{ with service `%s` }}{{ with index . 0 }}{{ .Address }}:{{ .Port }}{{ end }}{{ end }}"
+
   grafana_config = yamlencode({
     apiVersion = 1
     datasources = [
@@ -10,13 +9,13 @@ locals {
         name   = "Loki"
         type   = "loki"
         access = "proxy"
-        url    = format("http://%s", format(local.nomad_service_template, "loki"))
+        url    = format("http://%s", format(local.nomad_service_template, var.service_name_loki))
       },
       {
         name      = "Prometheus"
         type      = "prometheus"
         access    = "proxy"
-        url       = format("http://%s", format(local.nomad_service_template, "prometheus"))
+        url       = format("http://%s", format(local.nomad_service_template, var.service_name_prometheus))
         isDefault = true
       }
     ]
@@ -109,29 +108,39 @@ locals {
   })
 }
 
-# resource "nomad_variable" "grafana_loki_prometheus" {
-#   path      = "nomad/jobs/${var.job_name}"
-#   namespace = var.namespace
-#   items = {
-#   }
-# }
+resource "random_password" "grafana_admin" {
+  length  = 16
+  special = true
+}
+
+resource "nomad_variable" "grafana_loki_prometheus" {
+  path      = "nomad/jobs/${var.job_name}"
+  namespace = var.namespace
+  items = {
+    grafana_admin_password = coalesce(var.grafana_admin_password, random_password.grafana_admin.result)
+  }
+}
 
 resource "nomad_job" "grafana_loki_prometheus" {
   jobspec = templatefile("${path.module}/templates/jobspec.nomad.hcl.tftpl", {
-    job_name           = var.job_name
-    datacenter_name    = var.datacenter_name
-    namespace          = var.namespace
-    grafana_version    = var.grafana_version
-    grafana_config     = local.grafana_config
-    loki_version       = var.loki_version
-    loki_config        = local.loki_config
-    prometheus_version = var.prometheus_version
-    prometheus_config  = local.prometheus_config
-    resources          = var.resources
+    job_name                = var.job_name
+    datacenter_name         = var.datacenter_name
+    namespace               = var.namespace
+    grafana_version         = var.grafana_version
+    grafana_config          = local.grafana_config
+    grafana_admin_password  = format(local.nomad_var_template, "grafana_admin_password")
+    loki_version            = var.loki_version
+    loki_config             = local.loki_config
+    prometheus_version      = var.prometheus_version
+    prometheus_config       = local.prometheus_config
+    resources               = var.resources
+    service_name_grafana    = var.service_name_grafana
+    service_name_loki       = var.service_name_loki
+    service_name_prometheus = var.service_name_prometheus
   })
   purge_on_destroy = var.purge_on_destroy
   depends_on = [
-    # nomad_variable.grafana_loki_prometheus,
+    nomad_variable.grafana_loki_prometheus,
     nomad_dynamic_host_volume.prometheus,
     nomad_dynamic_host_volume.loki,
   ]

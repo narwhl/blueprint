@@ -19,7 +19,7 @@ job "${job_name}" {
     }
 
     service {
-      name = "grafana"
+      name = "${service_name_grafana}"
       port = "http"
       check {
         type = "http"
@@ -46,7 +46,7 @@ ${grafana_config}
 
       template {
         data = <<-EOF
-        GF_SECURITY_ADMIN_PASSWORD = "admin"
+        GF_SECURITY_ADMIN_PASSWORD = "${grafana_admin_password}"
         GF_PATHS_PROVISIONING = "/local"
         EOF
         destination = "local/grafana.env"
@@ -73,7 +73,7 @@ ${grafana_config}
     }
 
     service {
-      name = "loki"
+      name = "${service_name_loki}"
       port = "http"
       check {
         type = "http"
@@ -151,7 +151,7 @@ ${loki_config}
     }
 
     service {
-      name = "prometheus"
+      name = "${service_name_prometheus}"
       port = "http"
       check {
         type = "http"
