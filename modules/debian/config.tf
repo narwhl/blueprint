@@ -124,7 +124,7 @@ locals {
           content = templatefile("${path.module}/templates/resolved.conf.tftpl", {
             nameservers = var.nameservers
           })
-          enabled = !contains(flatten(var.substrates.*.packages), "consul")
+          enabled = !contains(flatten(var.substrates.*.install.packages), "consul")
           tags    = "cloud-init"
           owner   = "root"
           group   = "root"
