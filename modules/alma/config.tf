@@ -205,6 +205,27 @@ locals {
             loki_addr       = var.telemetry.loki_addr
             prometheus_addr = var.telemetry.prometheus_addr
           }) : ""
+        },
+        {
+          path = "/etc/systemd/system/fetch-remote-files.service"
+          content = <<-EOF
+          [Unit]
+          Description=Adhoc remote files fetching during provisioning
+          After=network-online.target
+          Wants=network-online.target
+
+          [Service]
+          Type=oneshot
+          ExecStart=/opt/bin/fetch-remote-files.sh
+          User=root
+          Group=root
+
+          # Keep the service in a 'failed' state if the script exits with an error.
+          RemainAfterExit=no
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
         }
       ],
       [
