@@ -153,6 +153,7 @@ locals {
           )
           content = format("https://artifact.narwhl.dev/sysext/alloy-%s-x86-64.raw", local.alloy.version)
           enabled = true
+          defer   = false
           mode    = "0644"
           owner   = "root"
           group   = "root"
@@ -163,6 +164,7 @@ locals {
           mode    = "0644"
           owner   = "alloy"
           group   = "alloy"
+          defer   = false
           enabled = true
           tags    = "cloud-init"
           content = <<-EOF
@@ -191,6 +193,7 @@ locals {
           group   = "alloy"
           enabled = true
           tags    = "cloud-init"
+          defer   = false
           content = var.telemetry.enabled ? templatefile("${path.module}/templates/config.alloy.tftpl", {
             loki_addr       = var.telemetry.loki_addr
             prometheus_addr = var.telemetry.prometheus_addr
