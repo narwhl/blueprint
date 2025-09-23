@@ -241,7 +241,7 @@ locals {
           tags    = "cloud-init"
         }
       ],
-      flatten(var.substrates.*.remote_files)
+      flatten(var.substrates.*.files)
       ) : {
       path = file.path
       source = {
