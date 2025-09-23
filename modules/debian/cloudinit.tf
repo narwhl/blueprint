@@ -48,7 +48,10 @@ data "cloudinit_config" "user_data" {
             timezone         = var.timezone
             disk_setup       = local.disks
             fs_setup         = local.filesystems
-            write_files      = local.files
+            write_files = concat(
+              local.files,
+              local.remote_files
+            )
             runcmd = concat(
               flatten([
                 for repository in distinct(

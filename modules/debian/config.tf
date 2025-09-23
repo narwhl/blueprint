@@ -147,19 +147,6 @@ locals {
           defer   = false
         },
         {
-          path = format(
-            "/etc/extensions/alloy-%s-x86-64.raw",
-            local.alloy.version
-          )
-          content = format("https://artifact.narwhl.dev/sysext/alloy-%s-x86-64.raw", local.alloy.version)
-          enabled = true
-          defer   = false
-          mode    = "0644"
-          owner   = "root"
-          group   = "root"
-          tags    = "cloud-init"
-        },
-        {
           path    = "/etc/default/alloy"
           mode    = "0644"
           owner   = "alloy"
@@ -228,7 +215,34 @@ locals {
         }
       ],
       flatten(var.substrates.*.files)
-      ) : startswith(file.content, "https://") ? {
+      ) : {
+      encoding    = "b64"
+      content     = base64encode(file.content)
+      path        = file.path
+      owner       = format("%s:%s", file.owner, file.group)
+      permissions = length(file.mode) < 4 ? "0${file.mode}" : file.mode
+      defer       = file.defer # ensure users, packages are created before writing extra files
+    } if file.enabled == true && strcontains(file.tags, "cloud-init") && !startswith(file.content, "https://")
+  ]
+  remote_files = [
+    for file in concat(
+      [
+        {
+          path = format(
+            "/etc/extensions/alloy-%s-x86-64.raw",
+            local.alloy.version
+          )
+          content = format("https://artifact.narwhl.dev/sysext/alloy-%s-x86-64.raw", local.alloy.version)
+          enabled = true
+          defer   = false
+          mode    = "0644"
+          owner   = "root"
+          group   = "root"
+          tags    = "cloud-init"
+        }
+      ],
+      flatten(var.substrates.*.remote_files)
+      ) : {
       path = file.path
       source = {
         uri = file.content
@@ -236,14 +250,7 @@ locals {
       owner       = format("%s:%s", file.owner, file.group)
       permissions = length(file.mode) < 4 ? "0${file.mode}" : file.mode
       defer       = file.defer # ensure users, packages are created before writing extra files
-      } : {
-      encoding    = "b64"
-      content     = base64encode(file.content)
-      path        = file.path
-      owner       = format("%s:%s", file.owner, file.group)
-      permissions = length(file.mode) < 4 ? "0${file.mode}" : file.mode
-      defer       = file.defer # ensure users, packages are created before writing extra files
-    } if file.enabled == true && strcontains(file.tags, "cloud-init")
+    } if file.enabled == true && strcontains(file.tags, "cloud-init") && startswith(file.content, "http")
   ]
   directories = [for dir in flatten(var.substrates.*.directories) : dir if dir.enabled == true && strcontains(dir.tags, "cloud-init")]
   repositories = contains(flatten(var.substrates.*.install.repositories), "nvidia-container-toolkit") ? {
