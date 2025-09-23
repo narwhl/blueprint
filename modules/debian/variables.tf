@@ -162,7 +162,7 @@ variable "substrates" {
       mode    = optional(string, "755")
       owner   = optional(string, "root")
       group   = optional(string, "root")
-      tags    = optional(string, "ignition") # only ignition is specified for backward compatibility
+      tags    = optional(string, "cloud-init") # only ignition is specified for backward compatibility
     })), [])
     install = object({
       systemd_units = list(object({
