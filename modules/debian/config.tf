@@ -64,7 +64,14 @@ locals {
         passwd      = data.external.openssl[0].result.password_hash
         lock_passwd = false
       } : {}
-    )
+    ),
+    {
+      name           = "alloy"
+      shell          = "/bin/false"
+      no_create_home = true
+      system         = true
+      lock_passwd    = true
+    }
   ]
   packages = concat(
     var.default_packages,
