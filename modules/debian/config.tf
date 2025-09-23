@@ -66,11 +66,11 @@ locals {
       } : {}
     ),
     {
-      name           = "alloy"
-      shell          = "/bin/false"
-      no_create_home = true
-      system         = true
-      lock_passwd    = true
+      name        = "alloy"
+      shell       = "/bin/false"
+      homedir     = "/var/lib/alloy"
+      system      = true
+      lock_passwd = true
     }
   ]
   packages = concat(

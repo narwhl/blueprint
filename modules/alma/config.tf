@@ -85,7 +85,14 @@ locals {
         passwd      = data.external.openssl[0].result.password_hash
         lock_passwd = false
       } : {}
-    )
+    ),
+    {
+      name        = "alloy"
+      shell       = "/bin/false"
+      homedir     = "/var/lib/alloy"
+      system      = true
+      lock_passwd = true
+    }
   ]
   packages = concat(
     var.default_packages,
@@ -128,6 +135,7 @@ locals {
           mode    = "0755"
           enabled = true
           tags    = "cloud-init"
+          defer   = false
         },
         {
           path    = "/etc/systemd/system/docker.service.d/override.conf"
@@ -137,6 +145,7 @@ locals {
           group   = "root"
           mode    = "0644"
           tags    = "cloud-init"
+          defer   = false
         },
         {
           path = "/etc/systemd/system/getty@tty1.service.d/override.conf"
@@ -151,6 +160,7 @@ locals {
           enabled = var.autologin
           mode    = "0644"
           tags    = "cloud-init"
+          defer   = false
         },
         {
           path    = "/etc/yum.repos.d/mongo.repo"
@@ -167,6 +177,7 @@ locals {
           enabled = true
           mode    = "0644"
           tags    = "cloud-init"
+          defer   = false
         },
         {
           path    = "/etc/default/alloy"
@@ -175,6 +186,7 @@ locals {
           group   = "alloy"
           enabled = true
           tags    = "cloud-init"
+          defer   = false
           content = <<-EOF
           ## Path:
           ## Description: Grafana Alloy settings
@@ -201,13 +213,14 @@ locals {
           group   = "alloy"
           enabled = true
           tags    = "cloud-init"
+          defer   = false
           content = var.telemetry.enabled ? templatefile("${path.module}/templates/config.alloy.tftpl", {
             loki_addr       = var.telemetry.loki_addr
             prometheus_addr = var.telemetry.prometheus_addr
           }) : ""
         },
         {
-          path = "/etc/systemd/system/fetch-remote-files.service"
+          path    = "/etc/systemd/system/fetch-remote-files.service"
           content = <<-EOF
           [Unit]
           Description=Adhoc remote files fetching during provisioning
