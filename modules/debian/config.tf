@@ -68,7 +68,6 @@ locals {
     {
       name        = "alloy"
       shell       = "/bin/false"
-      homedir     = "/var/lib/alloy"
       system      = true
       lock_passwd = true
     }
@@ -241,7 +240,7 @@ locals {
           )
           content = format("https://artifact.narwhl.dev/sysext/alloy-%s-x86-64.raw", local.alloy.version)
           enabled = true
-          defer   = true
+          defer   = false
           mode    = "0644"
           owner   = "root"
           group   = "root"
@@ -259,7 +258,19 @@ locals {
       defer       = file.defer # ensure users, packages are created before writing extra files
     } if file.enabled == true && strcontains(file.tags, "cloud-init") && startswith(file.content, "http")
   ]
-  directories = [for dir in flatten(var.substrates.*.directories) : dir if dir.enabled == true && strcontains(dir.tags, "cloud-init")]
+  directories = [for dir in concat(
+    flatten(var.substrates.*.directories),
+    [
+      {
+        path    = "/var/lib/alloy"
+        owner   = "alloy"
+        group   = "alloy"
+        mode    = "755"
+        enabled = true
+        tags    = "cloud-init"
+      }
+    ]
+  ) : dir if dir.enabled == true && strcontains(dir.tags, "cloud-init")]
   repositories = contains(flatten(var.substrates.*.install.repositories), "nvidia-container-toolkit") ? {
     "non-free.list" = {
       source = "deb http://deb.debian.org/debian/ bookworm main contrib non-free non-free-firmware"
