@@ -32,10 +32,22 @@ variable "default_packages" {
   ]
 }
 
-variable "expose_metrics" {
-  type        = bool
-  default     = false
-  description = "Whether to enable prometheus node-exporter as system service container"
+variable "telemetry" {
+  type = object({
+    enabled         = bool
+    loki_addr       = string
+    prometheus_addr = string
+  })
+  description = "Whether to enable alloy logging to Loki endpoint, e.g. { enabled = true, loki_endpoint = 'https://loki.example.com/loki/api/v1/push' }"
+  default = {
+    enabled         = false
+    loki_addr       = ""
+    prometheus_addr = ""
+  }
+  validation {
+    condition     = var.telemetry.enabled ? (length(var.telemetry.loki_addr) > 0 && length(var.telemetry.prometheus_addr) > 0) : true
+    error_message = "Loki and Prometheus addresses must be set if telemetry is enabled"
+  }
 }
 
 variable "username" {
@@ -118,9 +130,12 @@ variable "gateway_ip" {
 }
 
 variable "nameservers" {
-  type        = list(string)
-  default     = ["1.1.1.1"]
-  description = "Nameservers for the Debian VM"
+  type = list(string)
+  default = [
+    "1.1.1.1#cloudflare-dns.com",
+    "8.8.8.8#dns.google"
+  ]
+  description = "List of nameservers for the VM"
 }
 
 variable "ca_certs" {
@@ -147,7 +162,7 @@ variable "substrates" {
       mode    = optional(string, "755")
       owner   = optional(string, "root")
       group   = optional(string, "root")
-      tags    = optional(string, "ignition") # only ignition is specified for backward compatibility
+      tags    = optional(string, "cloud-init") # only ignition is specified for backward compatibility
     })), [])
     install = object({
       systemd_units = list(object({
