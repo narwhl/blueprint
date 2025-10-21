@@ -1,0 +1,16 @@
+#!/bin/bash
+# Nomad environment configuration
+
+# Set Nomad HTTP address
+export NOMAD_ADDR="${NOMAD_ADDR:-http://127.0.0.1:4646}"
+
+# Set Nomad datacenter
+export NOMAD_DATACENTER="${NOMAD_DATACENTER:-{{ nomad_datacenter }}}"
+
+# Set Nomad region
+export NOMAD_REGION="${NOMAD_REGION:-global}"
+
+# Add nomad command completion if available
+if command -v nomad >/dev/null 2>&1; then
+    complete -C /usr/bin/nomad nomad
+fi

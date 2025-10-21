@@ -1,0 +1,6 @@
+{
+{% for key, value in docker_daemon_config.items() %}
+  "{{ key }}": {% if value is string %}"{{ value }}"{% elif value is mapping %}{{ value | to_nice_json }}{% else %}{{ value | to_nice_json }}{% endif %}{% if not loop.last %},{% endif %}
+
+{% endfor %}
+}

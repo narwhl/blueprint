@@ -1,0 +1,26 @@
+repo_uri: "https://download.docker.com/linux"
+release_components:
+  - stable
+keyring_path: "/usr/share/keyrings/docker-archive-keyring.gpg"
+
+# Docker Compose installation
+install_docker_compose: true
+docker_compose_version: "2.24.1"
+docker_compose_url: "https://github.com/docker/compose/releases/download/v{{ docker_compose_version }}/docker-compose-{{ ansible_system | lower }}-{{ ansible_architecture }}"
+
+# Docker users (empty by default)
+docker_users: []
+
+# Docker daemon configuration (optional)
+# docker_daemon_config:
+#   log-driver: "json-file"
+#   log-opts:
+#     max-size: "10m"
+#     max-file: "3"
+#   storage-driver: "overlay2"
+
+# Docker systemd overrides (optional)
+# docker_systemd_overrides:
+#   Service:
+#     ExecStart: ""
+#     ExecStart: "/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock"
