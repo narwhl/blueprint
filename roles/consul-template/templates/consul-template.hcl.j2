@@ -1,0 +1,40 @@
+# Consul-Template configuration
+consul {
+  address = "{{ consul_template_consul_addr | default('127.0.0.1:8500') }}"
+  
+  retry {
+    enabled  = true
+    attempts = 5
+    backoff  = "250ms"
+  }
+}
+
+vault {
+  address = "{{ consul_template_vault_addr | default('') }}"
+  
+  retry {
+    enabled  = true
+    attempts = 5
+    backoff  = "250ms"
+  }
+}
+
+log_level = "{{ consul_template_log_level | default('info') }}"
+
+{% if consul_template_templates is defined %}
+{% for template in consul_template_templates %}
+template {
+  source      = "{{ template.source }}"
+  destination = "{{ template.destination }}"
+  {% if template.command is defined %}
+  command     = "{{ template.command }}"
+  {% endif %}
+  {% if template.perms is defined %}
+  perms       = {{ template.perms }}
+  {% endif %}
+  {% if template.backup is defined %}
+  backup      = {{ template.backup | lower }}
+  {% endif %}
+}
+{% endfor %}
+{% endif %}
