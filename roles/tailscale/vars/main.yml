@@ -1,0 +1,22 @@
+keyring_path: /usr/share/keyrings/tailscale-archive-keyring.gpg
+sysctl_path: /etc/sysctl.d/99-tailscale.conf
+repo_uri: https://pkgs.tailscale.com/stable
+release_components: 
+  - main
+
+# Tailscale authentication
+# tailscale_auth_key: "your-auth-key"
+# tailscale_login_server: "https://your-headscale-server.com"
+
+# Tailscale configuration
+# tailscale_hostname: "{{ inventory_hostname }}"
+tailscale_exit_node: false
+tailscale_ssh: false
+
+# Subnet routes to advertise (list of CIDR blocks)
+# tailscale_subnet_routes:
+#   - "192.168.1.0/24"
+#   - "10.0.0.0/8"
+
+# Additional flags for 'tailscale up' command
+# tailscale_up_flags: "--accept-routes --accept-dns"
