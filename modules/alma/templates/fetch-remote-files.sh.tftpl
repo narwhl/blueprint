@@ -1,0 +1,71 @@
+#!/bin/bash
+# /opt/bin/fetch-remote-files.sh
+
+# Exit immediately if a command exits with a non-zero status.
+set -e
+
+# --- Configuration ---
+# Define the files to download, their destinations, permissions, and owners.
+# Ensure the number of items in each array is the same.
+
+# List of URLs to download from.
+declare -a URLS=(
+  ${urls}
+)
+
+# Corresponding destination paths for each file.
+declare -a DESTINATIONS=(
+  ${paths}
+)
+
+# Corresponding file permissions in octal format (e.g., 644, 755).
+declare -a PERMISSIONS=(
+  ${modes}
+)
+
+# Corresponding owner and group for each file (e.g., "user:group").
+declare -a OWNERS=(
+  ${owners}
+)
+
+# --- Execution ---
+echo "Starting file download and configuration process..."
+
+# Loop through the indices of the arrays to process each file.
+for i in "$${!URLS[@]}"; do
+    URL="$${URLS[$i]}"
+    DEST="$${DESTINATIONS[$i]}"
+    PERM="$${PERMISSIONS[$i]}"
+    OWNER="$${OWNERS[$i]}"
+    DEST_DIR=$(dirname "$DEST")
+
+    echo "Processing $${URL}..."
+
+    # 1. Ensure the destination directory exists.
+    # The -p flag creates parent directories as needed.
+    echo "  -> Ensuring directory $${DEST_DIR} exists."
+    mkdir -p "$DEST_DIR"
+
+    # 2. Download the file using wget.
+    # -q: Quiet mode (no output).
+    # -O: Write output to the specified file.
+    echo "  -> Downloading to $${DEST}."
+    wget -q -O "$DEST" "$URL"
+
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to download $${URL} with wget" >&2
+        # 'set -e' will cause the script to exit on failure.
+    fi
+
+    # 3. Set the file permissions using chmod.
+    echo "  -> Setting permissions to $${PERM}."
+    chmod "$PERM" "$DEST"
+
+    # 4. Set the file owner and group using chown.
+    echo "  -> Setting owner to $${OWNER}."
+    chown "$OWNER" "$DEST"
+
+    echo "Successfully processed and configured $${DEST}"
+done
+
+echo "All files have been downloaded and configured successfully."
