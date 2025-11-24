@@ -29,7 +29,11 @@ module "debian" {
 
 - `expose_docker_socket`: `(bool: false)` - Whether to enable docker socket to be accessible via a TCP listener.
 
-- `expose_metrics`: `(bool: false)` - Whether to install and enable prometheus node-exporter as systemd service.
+- `telemetry`: `(object: <optional>)` - Enable remote logs and system metrics publishing via Grafana Alloy
+
+  - `enabled`: Whether or not to enable telemetry
+  - `loki_addr`: Endpoint to be used for pushing logs to loki server
+  - `prometheus_addr`: Endpoint to be used for pushing metrics data to prometheus server
 
 - `ssh_keys_import`: `([]string: <optional>)` - List of urls that points to your ssh public keys, support fetching over git hosting provider, e.g `https://github.com/{user}.keys`, defaults to `[]`.
 
