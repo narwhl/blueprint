@@ -19,7 +19,7 @@ job "${job_name}" {
     }
 
     service {
-      name     = "openfga-http"
+      name     = "${job_name}-http"
       provider = "nomad"
       port     = "http"
       tags = [
@@ -37,14 +37,14 @@ job "${job_name}" {
     }
 
     service {
-      name     = "openfga-grpc"
+      name     = "${job_name}-grpc"
       provider = "nomad"
       port     = "grpc"
     }
 
 %{ if playground_enabled ~}
     service {
-      name     = "openfga-playground"
+      name     = "${job_name}-playground"
       provider = "nomad"
       port     = "playground"
     }
