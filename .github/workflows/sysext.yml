@@ -19,9 +19,9 @@ jobs:
         working-directory: imgfab/sysext
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Authenticate to Security Token Service
-        uses: narwhl/imprint@v1
+        uses: narwhl/actions/imprint@latest
         with:
           scope: cloudflare:r2
       - name: Install dependencies

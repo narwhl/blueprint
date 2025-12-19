@@ -26,20 +26,20 @@ jobs:
         working-directory: registry
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
 
       - name: Install build-deps and generate build artifact
         run: npm ci --silent && npm run deploy
 
       - name: Authenticate to Security Token Service
-        uses: narwhl/imprint@v1
+        uses: narwhl/actions/imprint@latest
         with:
           scope: cloudflare
 
       - name: Setup Terraform
-        uses: narwhl/setup-terraform@v1
+        uses: narwhl/actions/setup-terraform@latest
         with:
           state: root/registry
 
