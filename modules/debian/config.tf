@@ -40,6 +40,7 @@ data "external" "openssl" {
   }
 }
 locals {
+  alloy       = jsondecode(data.http.upstream.response_body).syspkgs["alloy"]
   subnet_bits = 0 < length(var.network) ? split("/", var.network)[1] : "24"
 }
 
@@ -63,13 +64,18 @@ locals {
         passwd      = data.external.openssl[0].result.password_hash
         lock_passwd = false
       } : {}
-    )
+    ),
+    {
+      name        = "alloy"
+      shell       = "/bin/false"
+      system      = true
+      lock_passwd = true
+    }
   ]
   packages = concat(
     var.default_packages,
     local.additional_packages,
     flatten(var.substrates.*.install.packages),
-    var.expose_metrics ? ["prometheus-node-exporter"] : []
   )
   ca_certs = {
     trusted = [
@@ -120,20 +126,72 @@ locals {
           defer   = false
         },
         {
+          path = "/etc/systemd/resolved.conf"
+          content = templatefile("${path.module}/templates/resolved.conf.tftpl", {
+            nameservers = var.nameservers
+          })
+          enabled = !contains(flatten(var.substrates.*.install.packages), "consul")
+          tags    = "cloud-init"
+          owner   = "root"
+          group   = "root"
+          mode    = "0644"
+          defer   = false
+        },
+        {
           # Adding 00 prefix to override the precedence of the default file
-          path = "/etc/systemd/network/00-static.network"
-          content = templatefile("${path.module}/templates/static.network.tftpl", {
+          path = "/etc/systemd/network/00-default.network"
+          content = templatefile("${path.module}/templates/default.network.tftpl", {
             ip_address  = "${var.ip_address}/${local.subnet_bits}"
             gateway_ip  = var.gateway_ip
             nameservers = var.nameservers
           })
           tags    = "cloud-init"
-          enabled = length(var.ip_address) > 0 && length(var.gateway_ip) > 0 && length(var.network) > 0
+          enabled = true
           owner   = "root"
           group   = "root"
           mode    = "0644"
           defer   = false
-        }
+        },
+        {
+          path    = "/etc/default/alloy"
+          mode    = "0644"
+          owner   = "alloy"
+          group   = "alloy"
+          defer   = true
+          enabled = true
+          tags    = "cloud-init"
+          content = <<-EOF
+          ## Path:
+          ## Description: Grafana Alloy settings
+          ## Type:        string
+          ## Default:     ""
+          ## ServiceRestart: alloy
+          #
+          # Command line options for alloy
+          #
+          # The configuration file holding the Grafana Alloy configuration.
+          CONFIG_FILE="/etc/alloy"
+
+          # User-defined arguments to pass to the run command.
+          CUSTOM_ARGS=""
+
+          # Restart on system upgrade. Defaults to true.
+          RESTART_ON_UPGRADE=true
+        EOF
+        },
+        {
+          path    = "/etc/alloy/config.alloy"
+          mode    = "0644"
+          owner   = "alloy"
+          group   = "alloy"
+          enabled = true
+          tags    = "cloud-init"
+          defer   = true
+          content = var.telemetry.enabled ? templatefile("${path.module}/templates/config.alloy.tftpl", {
+            loki_addr       = var.telemetry.loki_addr
+            prometheus_addr = var.telemetry.prometheus_addr
+          }) : ""
+        },
       ],
       [
         for repository in distinct(
@@ -170,9 +228,49 @@ locals {
       owner       = format("%s:%s", file.owner, file.group)
       permissions = length(file.mode) < 4 ? "0${file.mode}" : file.mode
       defer       = file.defer # ensure users, packages are created before writing extra files
-    } if file.enabled == true && !startswith(file.content, "https://") && strcontains(file.tags, "cloud-init")
+    } if file.enabled == true && strcontains(file.tags, "cloud-init") && !startswith(file.content, "https://")
   ]
-  directories = [for dir in flatten(var.substrates.*.directories) : dir if dir.enabled == true && strcontains(dir.tags, "cloud-init")]
+  remote_files = [
+    for file in concat(
+      [
+        {
+          path = format(
+            "/etc/extensions/alloy-%s-x86-64.raw",
+            local.alloy.version
+          )
+          content = format("https://artifact.narwhl.dev/sysext/alloy-%s-x86-64.raw", local.alloy.version)
+          enabled = true
+          defer   = false
+          mode    = "0644"
+          owner   = "root"
+          group   = "root"
+          tags    = "cloud-init"
+        }
+      ],
+      flatten(var.substrates.*.files)
+      ) : {
+      path = file.path
+      source = {
+        uri = file.content
+      }
+      owner       = format("%s:%s", file.owner, file.group)
+      permissions = length(file.mode) < 4 ? "0${file.mode}" : file.mode
+      defer       = file.defer # ensure users, packages are created before writing extra files
+    } if file.enabled == true && strcontains(file.tags, "cloud-init") && startswith(file.content, "http")
+  ]
+  directories = [for dir in concat(
+    flatten(var.substrates.*.directories),
+    [
+      {
+        path    = "/var/lib/alloy"
+        owner   = "alloy"
+        group   = "alloy"
+        mode    = "755"
+        enabled = true
+        tags    = "cloud-init"
+      }
+    ]
+  ) : dir if dir.enabled == true && strcontains(dir.tags, "cloud-init")]
   repositories = contains(flatten(var.substrates.*.install.repositories), "nvidia-container-toolkit") ? {
     "non-free.list" = {
       source = "deb http://deb.debian.org/debian/ bookworm main contrib non-free non-free-firmware"

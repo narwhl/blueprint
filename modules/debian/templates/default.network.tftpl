@@ -1,0 +1,12 @@
+[Match]
+Name=e*
+
+[Network]
+%{ if ip_address != "" && gateway_ip != "" ~}
+Address=${ip_address}
+Gateway=${gateway_ip}
+%{ else ~}
+DHCP=yes
+[DHCP]
+UseDNS=false
+%{ endif }

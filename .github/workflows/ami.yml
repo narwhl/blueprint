@@ -5,8 +5,9 @@ on:
     paths:
       - imgfab/ami/**/*
       - .github/workflows/ami.yml
+    branches:
+      - main
   workflow_dispatch:
-
 
 permissions:
   contents: read

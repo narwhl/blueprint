@@ -5,6 +5,8 @@ on:
     paths:
       - imgfab/sysext/**/*
       - .github/workflows/sysext.yml
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
