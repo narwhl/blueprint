@@ -1,0 +1,81 @@
+---
+- name: Add HashiCorp GPG key
+  ansible.builtin.apt_key:
+    url: "{{ repo_uri }}/gpg"
+    keyring: "{{ keyring_path }}"
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Add HashiCorp repository
+  ansible.builtin.deb822_repository:
+    name: hashicorp
+    types: deb
+    uris: "{{ repo_uri }}"
+    suites: "{{ ansible_distribution_release }}"
+    components: "{{ release_components }}"
+    signed_by: "{{ keyring_path }}"
+  when: ansible_os_family == "Debian"
+
+- name: Update APT cache
+  ansible.builtin.apt:
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Add Hashicorp repository
+  ansible.builtin.shell: dnf config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+  when: ansible_os_family == "RedHat"
+
+- name: Install Consul-Template
+  ansible.builtin.package:
+    name: consul-template
+    state: present
+
+- name: Create consul-template user
+  ansible.builtin.user:
+    name: consul-template
+    system: true
+    shell: /bin/false
+    home: /var/lib/consul-template
+    createhome: true
+    state: present
+
+- name: Create consul-template configuration directory
+  ansible.builtin.file:
+    path: /etc/consul-template.d
+    state: directory
+    mode: "0755"
+
+- name: Create consul-template data directory
+  ansible.builtin.file:
+    path: /opt/consul-template
+    state: directory
+    mode: "0755"
+    owner: consul-template
+    group: consul-template
+
+- name: Copy consul-template configuration
+  ansible.builtin.template:
+    src: consul-template.hcl.j2
+    dest: /etc/consul-template.d/consul-template.hcl
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart consul-template
+
+- name: Create systemd service file for consul-template
+  ansible.builtin.template:
+    src: consul-template.service.j2
+    dest: /etc/systemd/system/consul-template.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart consul-template
+
+- name: Enable and start consul-template service
+  ansible.builtin.systemd:
+    name: consul-template
+    enabled: true
+    state: started
+    daemon_reload: true
