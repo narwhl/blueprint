@@ -47,6 +47,32 @@ module "ory" {
       EOT
     }
   ]
+
+  # optional: customize email templates
+  kratos_email_templates = {
+    recovery_valid = {
+      subject = "Reset your password"
+      body_html = {
+        content = <<-HTML
+          <html>
+            <body>
+              <h1>Password Reset</h1>
+              <p>Click <a href="{{ .RecoveryURL }}">here</a> to reset your password.</p>
+            </body>
+          </html>
+        HTML
+      }
+      body_text = {
+        content = "Reset your password by visiting: {{ .RecoveryURL }}"
+      }
+    }
+    # Or use remote templates:
+    # verification_valid = {
+    #   subject   = "Verify your email"
+    #   body_html = { uri = "https://cdn.example.com/templates/verify.html.gotmpl" }
+    #   body_text = { uri = "https://cdn.example.com/templates/verify.txt.gotmpl" }
+    # }
+  }
 }
 ```
 
@@ -114,6 +140,23 @@ module "ory" {
 - `registration_webhooks`: `([]object: <optional>)` - The registration webhooks.
 
 - `settings_webhooks`: `([]object: <optional>)` - The settings webhooks.
+
+- `kratos_email_templates`: `(object: <optional>)` - Custom email templates for Kratos courier. Defaults to `null` (uses built-in templates). Each template type accepts:
+  - `subject`: `(string)` - Email subject line (auto base64-encoded).
+  - `body_html`: `(object)` - HTML body with either `content` (inline, auto-encoded) or `uri` (remote URL).
+  - `body_text`: `(object)` - Plain text body with either `content` (inline, auto-encoded) or `uri` (remote URL).
+
+  Available template types:
+  - `recovery_valid` - Password recovery for existing users
+  - `recovery_invalid` - Recovery request for non-existent users
+  - `recovery_code_valid` - Code-based recovery for existing users
+  - `recovery_code_invalid` - Code-based recovery for non-existent users
+  - `verification_valid` - Email verification for existing users
+  - `verification_invalid` - Verification for non-existent users
+  - `verification_code_valid` - Code-based verification for existing users
+  - `verification_code_invalid` - Code-based verification for non-existent users
+  - `login_code_valid` - Passwordless login code
+  - `registration_code_valid` - Registration confirmation code
 
 - `traefik_entrypoints`: `(object: <optional>)` - The entrypoints to expose the service.
 

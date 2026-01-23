@@ -177,6 +177,99 @@ variable "settings_webhooks" {
   description = "Webhooks to call after settings are updated"
 }
 
+variable "kratos_email_templates" {
+  type = object({
+    recovery_valid = optional(object({
+      subject = optional(string)
+      body_html = object({
+        content = optional(string)
+        uri     = optional(string)
+      })
+      body_text = object({
+        content = optional(string)
+        uri     = optional(string)
+      })
+    }))
+    recovery_invalid = optional(object({
+      subject   = optional(string)
+      body_html = object({ content = optional(string), uri = optional(string) })
+      body_text = object({ content = optional(string), uri = optional(string) })
+    }))
+    recovery_code_valid = optional(object({
+      subject   = optional(string)
+      body_html = object({ content = optional(string), uri = optional(string) })
+      body_text = object({ content = optional(string), uri = optional(string) })
+    }))
+    recovery_code_invalid = optional(object({
+      subject   = optional(string)
+      body_html = object({ content = optional(string), uri = optional(string) })
+      body_text = object({ content = optional(string), uri = optional(string) })
+    }))
+    verification_valid = optional(object({
+      subject   = optional(string)
+      body_html = object({ content = optional(string), uri = optional(string) })
+      body_text = object({ content = optional(string), uri = optional(string) })
+    }))
+    verification_invalid = optional(object({
+      subject   = optional(string)
+      body_html = object({ content = optional(string), uri = optional(string) })
+      body_text = object({ content = optional(string), uri = optional(string) })
+    }))
+    verification_code_valid = optional(object({
+      subject   = optional(string)
+      body_html = object({ content = optional(string), uri = optional(string) })
+      body_text = object({ content = optional(string), uri = optional(string) })
+    }))
+    verification_code_invalid = optional(object({
+      subject   = optional(string)
+      body_html = object({ content = optional(string), uri = optional(string) })
+      body_text = object({ content = optional(string), uri = optional(string) })
+    }))
+    login_code_valid = optional(object({
+      subject   = optional(string)
+      body_html = object({ content = optional(string), uri = optional(string) })
+      body_text = object({ content = optional(string), uri = optional(string) })
+    }))
+    registration_code_valid = optional(object({
+      subject   = optional(string)
+      body_html = object({ content = optional(string), uri = optional(string) })
+      body_text = object({ content = optional(string), uri = optional(string) })
+    }))
+  })
+  default     = null
+  description = "Custom email templates for Kratos. Use 'content' for inline templates (auto base64-encoded) or 'uri' for remote URLs (https://, base64://)."
+
+  validation {
+    condition = var.kratos_email_templates == null ? true : alltrue([
+      for template_name, template in {
+        for k, v in var.kratos_email_templates : k => v if v != null
+        } : (
+        (template.body_html != null && template.body_text != null) ||
+        (template.body_html == null && template.body_text == null)
+      )
+    ])
+    error_message = "When customizing a template, both body_html and body_text must be provided together."
+  }
+
+  validation {
+    condition = var.kratos_email_templates == null ? true : alltrue(flatten([
+      for template_name, template in {
+        for k, v in var.kratos_email_templates : k => v if v != null
+        } : [
+        template.body_html == null ? true : (
+          (template.body_html.content != null ? 1 : 0) +
+          (template.body_html.uri != null ? 1 : 0) == 1
+        ),
+        template.body_text == null ? true : (
+          (template.body_text.content != null ? 1 : 0) +
+          (template.body_text.uri != null ? 1 : 0) == 1
+        )
+      ]
+    ]))
+    error_message = "Each body_html and body_text must have exactly one of 'content' or 'uri' set, not both."
+  }
+}
+
 variable "traefik_entrypoint" {
   type = object({
     http  = optional(string, "http")
