@@ -1,4 +1,70 @@
 locals {
+  # Transform email templates: auto-encode content, passthrough uri
+  email_template_uris = var.kratos_email_templates == null ? {} : {
+    for template_name, template in var.kratos_email_templates : template_name => {
+      subject = template.subject != null ? "base64://${base64encode(template.subject)}" : null
+      body = {
+        html = (
+          template.body_html.content != null
+          ? "base64://${base64encode(template.body_html.content)}"
+          : template.body_html.uri
+        )
+        plaintext = (
+          template.body_text.content != null
+          ? "base64://${base64encode(template.body_text.content)}"
+          : template.body_text.uri
+        )
+      }
+    } if template != null
+  }
+
+  # Build the templates config structure for Kratos
+  kratos_courier_templates = length(local.email_template_uris) == 0 ? null : {
+    recovery = merge(
+      lookup(local.email_template_uris, "recovery_valid", null) != null ? {
+        valid = { email = local.email_template_uris["recovery_valid"] }
+      } : {},
+      lookup(local.email_template_uris, "recovery_invalid", null) != null ? {
+        invalid = { email = local.email_template_uris["recovery_invalid"] }
+      } : {}
+    )
+    recovery_code = merge(
+      lookup(local.email_template_uris, "recovery_code_valid", null) != null ? {
+        valid = { email = local.email_template_uris["recovery_code_valid"] }
+      } : {},
+      lookup(local.email_template_uris, "recovery_code_invalid", null) != null ? {
+        invalid = { email = local.email_template_uris["recovery_code_invalid"] }
+      } : {}
+    )
+    verification = merge(
+      lookup(local.email_template_uris, "verification_valid", null) != null ? {
+        valid = { email = local.email_template_uris["verification_valid"] }
+      } : {},
+      lookup(local.email_template_uris, "verification_invalid", null) != null ? {
+        invalid = { email = local.email_template_uris["verification_invalid"] }
+      } : {}
+    )
+    verification_code = merge(
+      lookup(local.email_template_uris, "verification_code_valid", null) != null ? {
+        valid = { email = local.email_template_uris["verification_code_valid"] }
+      } : {},
+      lookup(local.email_template_uris, "verification_code_invalid", null) != null ? {
+        invalid = { email = local.email_template_uris["verification_code_invalid"] }
+      } : {}
+    )
+    login_code = lookup(local.email_template_uris, "login_code_valid", null) != null ? {
+      valid = { email = local.email_template_uris["login_code_valid"] }
+    } : {}
+    registration_code = lookup(local.email_template_uris, "registration_code_valid", null) != null ? {
+      valid = { email = local.email_template_uris["registration_code_valid"] }
+    } : {}
+  }
+
+  # Filter out empty template categories
+  kratos_courier_templates_filtered = local.kratos_courier_templates == null ? null : {
+    for k, v in local.kratos_courier_templates : k => v if length(v) > 0
+  }
+
   kratos_config = yamlencode({
     identity = {
       default_schema_id = "default"
@@ -213,13 +279,18 @@ locals {
       ]
     }
 
-    courier = {
-      smtp = {
-        connection_uri = format(local.nomad_var_template, "smtp_connection_uri")
-        from_address   = var.email_from_address
-        from_name      = var.email_from_name
-      }
-    }
+    courier = merge(
+      {
+        smtp = {
+          connection_uri = format(local.nomad_var_template, "smtp_connection_uri")
+          from_address   = var.email_from_address
+          from_name      = var.email_from_name
+        }
+      },
+      local.kratos_courier_templates_filtered != null && length(local.kratos_courier_templates_filtered) > 0 ? {
+        templates = local.kratos_courier_templates_filtered
+      } : {}
+    )
 
     oauth2_provider = {
       url = "http://{{ range nomadService `hydra-admin` }}{{ .Address }}:{{ .Port }}{{ end }}"
