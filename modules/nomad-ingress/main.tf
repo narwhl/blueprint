@@ -91,7 +91,8 @@ resource "nomad_job" "ingress-controller" {
         service_name  = var.consul_provider_config.service_name == "" ? var.controller_job_name : var.consul_provider_config.service_name
         sidecars      = var.consul_provider_config.connect_aware ? [] : [{}]
       }]
-      static_routes = var.static_routes
+      static_routes                 = var.static_routes
+      enable_http_to_https_redirect = var.enable_http_to_https_redirect
     }
   )
 }
