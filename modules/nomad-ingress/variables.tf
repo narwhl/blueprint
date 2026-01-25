@@ -106,3 +106,9 @@ variable "use_https" {
   description = "Whether to use https for ingress"
   default     = false
 }
+
+variable "enable_http_to_https_redirect" {
+  type        = bool
+  description = "Whether to redirect HTTP traffic to HTTPS"
+  default     = false
+}
