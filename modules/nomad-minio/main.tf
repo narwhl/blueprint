@@ -21,6 +21,15 @@ resource "nomad_dynamic_host_volume" "minio_data" {
   capacity_max = var.dynamic_host_volume_config.capacity_max
   parameters   = var.dynamic_host_volume_config.parameters
 
+  dynamic "constraint" {
+    for_each = var.dynamic_host_volume_config.constraints
+    content {
+      attribute = constraint.value.attribute
+      operator  = constraint.value.operator
+      value     = constraint.value.value
+    }
+  }
+
   dynamic "capability" {
     for_each = var.dynamic_host_volume_config.capability != null ? [var.dynamic_host_volume_config.capability] : []
     content {

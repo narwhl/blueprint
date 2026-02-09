@@ -70,6 +70,11 @@ variable "dynamic_host_volume_config" {
     capacity_min = optional(string, "")
     capacity_max = optional(string, "")
     parameters   = optional(map(string), {})
+    constraints = optional(list(object({
+      attribute = string
+      operator  = optional(string)
+      value     = optional(string)
+    })), [])
     capability = optional(object({
       access_mode     = optional(string, "single-node-writer")
       attachment_mode = optional(string, "file-system")
