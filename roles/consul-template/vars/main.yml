@@ -1,0 +1,9 @@
+---
+repo_uri: https://apt.releases.hashicorp.com
+release_components: 
+  - main
+keyring_path: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+consul_template_consul_addr: "127.0.0.1:8500"
+consul_template_vault_addr: ""
+consul_template_log_level: "info"
+consul_template_templates: []  # List of template configurations

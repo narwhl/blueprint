@@ -1,0 +1,7 @@
+---
+# Docker Compose installation
+install_docker_compose: true
+docker_compose_version: "2.24.1"
+
+# Docker users (empty by default)
+docker_users: []

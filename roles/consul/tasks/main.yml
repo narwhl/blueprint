@@ -1,0 +1,151 @@
+---
+- name: Add HashiCorp GPG key
+  ansible.builtin.apt_key:
+    url: "{{ repo_uri }}/gpg"
+    keyring: "{{ keyring_path }}"
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Add HashiCorp repository
+  ansible.builtin.deb822_repository:
+    name: hashicorp
+    types: deb
+    uris: "{{ repo_uri }}"
+    suites: "{{ ansible_distribution_release }}"
+    components: "{{ release_components }}"
+    signed_by: "{{ keyring_path }}"
+  when: ansible_os_family == "Debian"
+
+- name: Update APT cache
+  ansible.builtin.apt:
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Add Hashicorp repository
+  ansible.builtin.shell: dnf config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+  when: ansible_os_family == "RedHat"
+
+- name: Install Consul
+  ansible.builtin.package:
+    name: consul
+    state: present
+
+- name: Copy custom consul.hcl configuration file
+  ansible.builtin.template:
+    src: consul.hcl.j2
+    dest: /etc/consul.d/consul.hcl
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Copy custom server.hcl configuration file
+  ansible.builtin.template:
+    src: server.hcl.j2
+    dest: /etc/consul.d/server.hcl
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Create TLS directory if it does not exist
+  ansible.builtin.file:
+    path: /etc/consul.d/tls
+    state: directory
+    mode: "0755"
+  when: consul_tls_enabled
+
+- name: Copy TLS certificate and key
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/etc/consul.d/tls/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - server.crt
+    - server.key
+  when: consul_tls_enabled
+
+- name: Copy custom tls.hcl configuration file
+  ansible.builtin.template:
+    src: tls.hcl.j2
+    dest: /etc/consul.d/tls.hcl
+    owner: root
+    group: root
+    mode: "0644"
+  when: consul_tls_enabled
+
+- name: Copy shell script for Consul
+  ansible.builtin.copy:
+    src: consul.sh
+    dest: /etc/profile.d/consul.sh
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Generate gossip encryption key if not provided
+  ansible.builtin.shell: consul keygen
+  register: consul_keygen
+  when: consul_gossip_key == "" and not (consul_dev_mode | default(false))
+  changed_when: false
+
+- name: Set gossip key fact
+  ansible.builtin.set_fact:
+    consul_gossip_key: "{{ consul_keygen.stdout if consul_gossip_key == '' else consul_gossip_key }}"
+  when: not (consul_dev_mode | default(false))
+
+- name: Update consul.hcl with generated gossip key
+  ansible.builtin.template:
+    src: consul.hcl.j2
+    dest: /etc/consul.d/consul.hcl
+    owner: root
+    group: root
+    mode: "0644"
+  when: consul_keygen.changed | default(false)
+
+- name: Handle Consul in dev mode for testing
+  block:
+    - name: Stop Consul service if running
+      ansible.builtin.systemd:
+        name: consul
+        state: stopped
+      failed_when: false
+
+    - name: Start Consul in dev mode
+      ansible.builtin.shell: |
+        nohup consul agent -dev -client=0.0.0.0 > /var/log/consul-dev.log 2>&1 &
+        echo $! > /var/run/consul-dev.pid
+      args:
+        creates: /var/run/consul-dev.pid
+
+    - name: Wait for Consul dev mode to be ready
+      ansible.builtin.wait_for:
+        port: 8500
+        host: 127.0.0.1
+        delay: 2
+        timeout: 30
+  when: consul_dev_mode | default(false)
+
+- name: Handle Consul in production mode
+  block:
+    - name: Enable Consul service
+      ansible.builtin.systemd:
+        name: consul
+        enabled: true
+        daemon_reload: true
+
+    - name: Start Consul service
+      ansible.builtin.systemd:
+        name: consul
+        state: started
+      register: consul_start_result
+      retries: 2
+      delay: 10
+      until: consul_start_result is succeeded
+
+    - name: Wait for Consul to be ready
+      ansible.builtin.wait_for:
+        port: 8500
+        host: 127.0.0.1
+        delay: 5
+        timeout: 60
+  when: not (consul_dev_mode | default(false))

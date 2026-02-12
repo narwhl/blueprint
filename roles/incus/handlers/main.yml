@@ -1,0 +1,5 @@
+---
+- name: restart incus
+  ansible.builtin.systemd:
+    name: incus
+    state: restarted
