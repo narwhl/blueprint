@@ -45,6 +45,7 @@ locals {
         "consul-template",
         "consul",
         "coredns",
+        "firecracker",
         "lego",
         "nomad",
         "node-exporter",

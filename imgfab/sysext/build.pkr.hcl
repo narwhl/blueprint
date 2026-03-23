@@ -101,6 +101,22 @@ build {
   }
 
   provisioner "shell-local" {
+    only = ["null.firecracker"]
+    inline = concat(
+      local.templates.firecracker,
+      [
+        "curl -LO ${local.syspkgs.firecracker.pkg_url}",
+        "tar -C firecracker-${local.syspkgs.firecracker.version}-amd64/usr/bin -xzf ${local.syspkgs.firecracker.filename} --strip-components=1 release-v${local.syspkgs.firecracker.version}-x86_64/firecracker-v${local.syspkgs.firecracker.version}-x86_64",
+        "mv firecracker-${local.syspkgs.firecracker.version}-amd64/usr/bin/firecracker-v${local.syspkgs.firecracker.version}-x86_64 firecracker-${local.syspkgs.firecracker.version}-amd64/usr/bin/firecracker",
+      ],
+      [
+        "mksquashfs firecracker-${local.syspkgs.firecracker.version}-amd64 firecracker-${local.syspkgs.firecracker.version}-x86-64.raw",
+        "rm -rf firecracker-${local.syspkgs.firecracker.version}-amd64 ${local.syspkgs.firecracker.filename}",
+      ]
+    )
+  }
+
+  provisioner "shell-local" {
     only = ["null.lego"]
     inline = concat(
       local.templates.lego,
