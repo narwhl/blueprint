@@ -22,6 +22,10 @@ source "null" "etcd" {
   communicator = "none"
 }
 
+source "null" "firecracker" {
+  communicator = "none"
+}
+
 source "null" "lego" {
   communicator = "none"
 }
