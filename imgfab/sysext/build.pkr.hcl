@@ -6,6 +6,7 @@ build {
     "source.null.coredns",
     "source.null.consul-template",
     "source.null.consul",
+    "source.null.firecracker",
     "source.null.lego",
     "source.null.nomad",
     "source.null.node-exporter",
