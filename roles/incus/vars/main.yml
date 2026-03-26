@@ -1,0 +1,26 @@
+repo_uri: https://pkgs.zabbly.com
+release_components:
+  - main
+keyring_path: /usr/share/keyrings/zabbly-archive-keyring.gpg
+
+# Incus admin users (empty by default)
+incus_admin_users: []
+
+# Auto-initialize Incus
+incus_auto_init: true
+
+# Storage pool configuration (optional)
+# incus_storage_pool:
+#   name: "default"
+#   driver: "dir"
+#   config: "source=/var/lib/incus/storage-pools/default"
+
+# Network configuration (optional)
+# incus_network:
+#   name: "incusbr0"
+#   config: "ipv4.address=10.0.0.1/24 ipv4.nat=true ipv6.address=none"
+
+# Server configuration (optional)
+# incus_server_config:
+#   core.https_address: "[::]:"
+#   core.trust_password: "your-password"
