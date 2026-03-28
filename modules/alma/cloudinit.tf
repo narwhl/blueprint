@@ -63,7 +63,8 @@ data "cloudinit_config" "user_data" {
                 "dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-${local.alma_major_version}-x86_64/pgdg-redhat-repo-latest.noarch.rpm",
                 "dnf -qy module disable postgresql",
                 "systemctl daemon-reload",
-                "systemctl enable qemu-guest-agent docker --now"
+                "systemctl enable qemu-guest-agent docker --now",
+                "systemctl enable --now fetch-remote-files.service"
               ],
               var.startup_script.inline,
               ["touch /etc/cloud/cloud-init.disabled"]
