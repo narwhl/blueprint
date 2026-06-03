@@ -48,7 +48,10 @@ data "cloudinit_config" "user_data" {
             timezone         = var.timezone
             disk_setup       = local.disks
             fs_setup         = local.filesystems
-            write_files      = local.files
+            write_files = concat(
+              local.files,
+              local.remote_files
+            )
             runcmd = concat(
               flatten([
                 for repository in distinct(
@@ -73,6 +76,7 @@ data "cloudinit_config" "user_data" {
                 "systemctl daemon-reload",
                 "systemctl enable qemu-guest-agent --now",
                 "systemctl restart --no-block systemd-resolved systemd-networkd",
+                "systemctl enable --now systemd-sysext",
               ],
               var.startup_script.inline,
               ["touch /etc/cloud/cloud-init.disabled"]

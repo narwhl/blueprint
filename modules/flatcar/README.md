@@ -65,7 +65,11 @@ module "flatcar" {
 
 - `expose_docker_socket`: `(bool: false)` Whether to enable docker socket to be accessible via a TCP listener.
 
-- `expose_metrics`: Whether to enable prometheus node-exporter as systemd service container, defaults to `false`.
+- `telemetry`: `(object: <optional>)` - Enable remote logs and system metrics publishing via Grafana Alloy
+
+  - `enabled`: Whether or not to enable telemetry
+  - `loki_addr`: Endpoint to be used for pushing logs to loki server
+  - `prometheus_addr`: Endpoint to be used for pushing metrics data to prometheus server 
 
 - `network`: `(string: <optional>)` - CIDR notation for the network to be used for the Flatcar instance, e.g `10.0.0.0/16`.
 

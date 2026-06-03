@@ -48,6 +48,12 @@ module "instance" {
 
 - `expose_docker_socket`: `(bool: false)` Whether to enable docker socket to be accessible via a TCP listener.
 
+- `telemetry`: `(object: <optional>)` - Enable remote logs and system metrics publishing via Grafana Alloy
+
+  - `enabled`: Whether or not to enable telemetry
+  - `loki_addr`: Endpoint to be used for pushing logs to loki server
+  - `prometheus_addr`: Endpoint to be used for pushing metrics data to prometheus server
+
 - `ssh_authorized_keys`: `([]string: [])` A list of SSH public keys to be added to the Flatcar instance login user, support fetching over git hosting provider, e.g `https://github.com/{user}.keys`
 
 - `network`: `(string: <optional>)` CIDR notation for the network to be used for the Flatcar instance, e.g `10.0.0.0/16`

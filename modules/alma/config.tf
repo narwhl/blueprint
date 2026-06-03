@@ -46,6 +46,26 @@ locals {
 }
 
 locals {
+  alloy = jsondecode(data.http.upstream.response_body).syspkgs["alloy"]
+  remote_files = concat(
+    [
+      for file in flatten(var.substrates.*.files) :
+      {
+        url   = file.content
+        path  = file.path
+        owner = format("%s:%s", file.owner, file.group)
+        mode  = length(file.mode) < 4 ? "0${file.mode}" : file.mode
+      } if file.enabled == true && startswith(file.content, "https://")
+    ],
+    [
+      {
+        url   = format("https://artifact.narwhl.dev/sysext/alloy-%s-x86-64.raw", local.alloy.version)
+        path  = format("/etc/extensions/alloy-%s-x86-64.raw", local.alloy.version)
+        owner = "root:root"
+        mode  = "0644"
+      }
+    ]
+  )
   users = [
     merge(
       {
@@ -65,7 +85,14 @@ locals {
         passwd      = data.external.openssl[0].result.password_hash
         lock_passwd = false
       } : {}
-    )
+    ),
+    {
+      name        = "alloy"
+      shell       = "/bin/false"
+      homedir     = "/var/lib/alloy"
+      system      = true
+      lock_passwd = true
+    }
   ]
   packages = concat(
     var.default_packages,
@@ -96,6 +123,21 @@ locals {
     for file in concat(
       [
         {
+          path = "/opt/bin/fetch-remote-files.sh"
+          content = templatefile("${path.module}/templates/fetch-remote-files.sh.tftpl", {
+            paths  = join("\n", local.remote_files.*.path)
+            urls   = join("\n", local.remote_files.*.url)
+            owners = join("\n", local.remote_files.*.owner)
+            modes  = join("\n", local.remote_files.*.mode)
+          })
+          owner   = "root"
+          group   = "root"
+          mode    = "0755"
+          enabled = true
+          tags    = "cloud-init"
+          defer   = false
+        },
+        {
           path    = "/etc/systemd/system/docker.service.d/override.conf"
           content = file("${path.module}/templates/docker-service-override.conf.tftpl")
           enabled = var.expose_docker_socket
@@ -103,6 +145,7 @@ locals {
           group   = "root"
           mode    = "0644"
           tags    = "cloud-init"
+          defer   = false
         },
         {
           path = "/etc/systemd/system/getty@tty1.service.d/override.conf"
@@ -117,21 +160,8 @@ locals {
           enabled = var.autologin
           mode    = "0644"
           tags    = "cloud-init"
+          defer   = false
         },
-        # {
-        #   # Adding 00 prefix to override the precedence of the default file
-        #   path = "/etc/systemd/network/00-static.network"
-        #   content = templatefile("${path.module}/templates/static.network.tftpl", {
-        #     ip_address  = "${var.ip_address}/${local.subnet_bits}"
-        #     gateway_ip  = var.gateway_ip
-        #     nameservers = var.nameservers
-        #   })
-        #   owner   = "root"
-        #   group   = "root"
-        #   enabled = length(var.ip_address) > 0 && length(var.gateway_ip) > 0 && length(var.network) > 0
-        #   mode    = "0644"
-        #   tags    = "cloud-init"
-        # },
         {
           path    = "/etc/yum.repos.d/mongo.repo"
           content = <<-EOF
@@ -147,7 +177,69 @@ locals {
           enabled = true
           mode    = "0644"
           tags    = "cloud-init"
+          defer   = false
         },
+        {
+          path    = "/etc/default/alloy"
+          mode    = "0644"
+          owner   = "alloy"
+          group   = "alloy"
+          enabled = true
+          tags    = "cloud-init"
+          defer   = false
+          content = <<-EOF
+          ## Path:
+          ## Description: Grafana Alloy settings
+          ## Type:        string
+          ## Default:     ""
+          ## ServiceRestart: alloy
+          #
+          # Command line options for alloy
+          #
+          # The configuration file holding the Grafana Alloy configuration.
+          CONFIG_FILE="/etc/alloy"
+
+          # User-defined arguments to pass to the run command.
+          CUSTOM_ARGS=""
+
+          # Restart on system upgrade. Defaults to true.
+          RESTART_ON_UPGRADE=true
+        EOF
+        },
+        {
+          path    = "/etc/alloy/config.alloy"
+          mode    = "0644"
+          owner   = "alloy"
+          group   = "alloy"
+          enabled = true
+          tags    = "cloud-init"
+          defer   = false
+          content = var.telemetry.enabled ? templatefile("${path.module}/templates/config.alloy.tftpl", {
+            loki_addr       = var.telemetry.loki_addr
+            prometheus_addr = var.telemetry.prometheus_addr
+          }) : ""
+        },
+        {
+          path    = "/etc/systemd/system/fetch-remote-files.service"
+          content = <<-EOF
+          [Unit]
+          Description=Adhoc remote files fetching during provisioning
+          After=network-online.target
+          Wants=network-online.target
+
+          [Service]
+          Type=oneshot
+          ExecStart=/opt/bin/fetch-remote-files.sh
+          User=root
+          Group=root
+
+          # Keep the service in a 'failed' state if the script exits with an error.
+          RemainAfterExit=no
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+        }
       ],
       [
         for repo in keys(data.http.repositories) : {
