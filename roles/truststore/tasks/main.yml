@@ -1,0 +1,25 @@
+---
+- name: Copy CA certificates to the server (single cert)
+  ansible.builtin.copy:
+    content: "{{ cert_pem }}"
+    dest: "/usr/local/share/ca-certificates/{{ cert_pem | md5 }}.crt"
+    mode: "0644"
+  notify: update ca certificates
+  when: cert_pem is defined and cert_pem != ""
+
+- name: Copy CA certificates to the server (multiple certs)
+  ansible.builtin.copy:
+    content: "{{ item.content }}"
+    dest: "/usr/local/share/ca-certificates/{{ item.name | default(item.content | md5) }}.crt"
+    mode: "0644"
+  loop: "{{ ca_certificates }}"
+  notify: update ca certificates
+  when: ca_certificates is defined and ca_certificates | length > 0
+
+- name: Remove CA certificates
+  ansible.builtin.file:
+    path: "/usr/local/share/ca-certificates/{{ item }}.crt"
+    state: absent
+  loop: "{{ remove_ca_certificates | default([]) }}"
+  notify: update ca certificates
+  when: remove_ca_certificates is defined and remove_ca_certificates | length > 0

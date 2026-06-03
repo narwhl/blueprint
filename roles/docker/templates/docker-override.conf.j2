@@ -1,0 +1,20 @@
+[Unit]
+{% if docker_systemd_overrides.Unit is defined %}
+{% for key, value in docker_systemd_overrides.Unit.items() %}
+{{ key }}={{ value }}
+{% endfor %}
+{% endif %}
+
+[Service]
+{% if docker_systemd_overrides.Service is defined %}
+{% for key, value in docker_systemd_overrides.Service.items() %}
+{{ key }}={{ value }}
+{% endfor %}
+{% endif %}
+
+[Install]
+{% if docker_systemd_overrides.Install is defined %}
+{% for key, value in docker_systemd_overrides.Install.items() %}
+{{ key }}={{ value }}
+{% endfor %}
+{% endif %}
